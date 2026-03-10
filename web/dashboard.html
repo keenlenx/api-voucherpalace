@@ -362,6 +362,38 @@
       color: var(--gray-900);
     }
 
+    /* ===== ISSUE TABS ===== */
+    .issue-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: var(--gray-100);
+      padding: 0.25rem;
+      border-radius: var(--radius-lg);
+      margin-bottom: 1.5rem;
+    }
+
+    .issue-tab-btn {
+      flex: 1;
+      padding: 0.75rem;
+      border: none;
+      background: none;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .issue-tab-btn.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .issue-tab-btn i {
+      margin-right: 0.5rem;
+    }
+
     /* ===== STATS GRID ===== */
     .stats-grid {
       display: grid;
@@ -708,6 +740,17 @@
       margin-top: 0.25rem;
     }
 
+    .list-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .list-actions .btn-sm {
+      padding: 0.25rem 0.75rem;
+      font-size: 0.75rem;
+    }
+
     /* ===== STATUS BADGES ===== */
     .badge {
       display: inline-flex;
@@ -735,6 +778,11 @@
     .badge-info {
       background: #dbeafe;
       color: #1e40af;
+    }
+
+    .badge-primary {
+      background: var(--primary);
+      color: white;
     }
 
     /* ===== FILTER BAR ===== */
@@ -898,51 +946,76 @@
     .w-full {
       width: 100%;
     }
+    
     .mobile-user-dropdown {
-  position: relative;
-}
+      position: relative;
+    }
 
-.mobile-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 0.5rem;
-  background: white;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  min-width: 180px;
-  z-index: 50;
-  display: none;
-  border: 1px solid var(--gray-200);
-}
+    .mobile-dropdown-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 0.5rem;
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      min-width: 180px;
+      z-index: 50;
+      display: none;
+      border: 1px solid var(--gray-200);
+    }
 
-.mobile-dropdown-menu.show {
-  display: block;
-}
+    .mobile-dropdown-menu.show {
+      display: block;
+    }
 
-.mobile-dropdown-item {
-  padding: 0.75rem 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  color: var(--gray-700);
-  transition: background 0.2s;
-}
+    .mobile-dropdown-item {
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      color: var(--gray-700);
+      transition: background 0.2s;
+    }
 
-.mobile-dropdown-item:hover {
-  background: var(--gray-50);
-}
+    .mobile-dropdown-item:hover {
+      background: var(--gray-50);
+    }
 
-.mobile-dropdown-item.text-danger {
-  color: var(--danger);
-}
+    .mobile-dropdown-item.text-danger {
+      color: var(--danger);
+    }
 
-.mobile-dropdown-divider {
-  height: 1px;
-  background: var(--gray-200);
-  margin: 0.5rem 0;
-}
+    .mobile-dropdown-divider {
+      height: 1px;
+      background: var(--gray-200);
+      margin: 0.5rem 0;
+    }
+    
+    /* Bulk CSV Preview */
+    .csv-preview {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .csv-preview-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 0.5rem;
+      padding: 0.5rem;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 0.875rem;
+    }
+    
+    .csv-preview-row.header {
+      font-weight: 600;
+      background: var(--gray-50);
+    }
   </style>
 </head>
 <body>
@@ -1059,6 +1132,7 @@
     let currentSection = 'dashboard';
     let issueTemplates = [];
     let issueUsers = [];
+    let companies = [];
     let merchants = [];
     let templates = [];
     let importFileData = null;
@@ -1432,11 +1506,16 @@ window.showMobileProfile = async () => {
       }
     }
 
-    // ===== ISSUE VOUCHER SECTION =====
+    // ===== ENHANCED ISSUE VOUCHER SECTION WITH TABS =====
+    let issueTab = 'single';
+    let bulkBeneficiaries = [];
+    
     async function loadIssueSection(container) {
       // Reset state
       selectedTemplate = null;
       selectedBeneficiary = null;
+      bulkBeneficiaries = [];
+      issueTab = 'single';
       
       // Load data first
       try {
@@ -1455,59 +1534,114 @@ window.showMobileProfile = async () => {
           <div class="card">
             <h2 class="card-title">Issue Voucher</h2>
             
-            <div class="form-group">
-              <label class="form-label"><i class="fas fa-building"></i>Company</label>
-              <input type="text" class="form-input" id="issueCompany" value="${companyName}" readonly>
+            <div class="issue-tabs">
+              <button class="issue-tab-btn active" onclick="setIssueTab('single')">
+                <i class="fas fa-user"></i> Single Issue
+              </button>
+              <button class="issue-tab-btn" onclick="setIssueTab('bulk')">
+                <i class="fas fa-users"></i> Bulk Issue
+              </button>
             </div>
             
-            <div class="form-group">
-              <label class="form-label"><i class="fas fa-layer-group"></i>Template <span class="required">*</span></label>
-              <select class="form-select" id="issueTemplate">
-                <option value="">Select template</option>
-                ${issueTemplates.map(t => `
-                  <option value="${t.id}" 
-                    data-type="${t.voucher_type}" 
-                    data-value="${t.value_amount || t.percentage_value}"
-                    data-min="${t.min_purchase_amount || 0}">
-                    ${t.template_name} - ${t.value_amount ? `KES ${t.value_amount}` : `${t.percentage_value}%`}
-                  </option>
-                `).join('')}
-              </select>
-            </div>
-            
-            <div id="issueTemplatePreview" class="hidden preview-card"></div>
-            
-            <div id="issuePurchaseContainer" class="hidden form-group">
-              <label class="form-label"><i class="fas fa-shopping-cart"></i>Purchase Amount (KES) <span class="required">*</span></label>
-              <input type="number" class="form-input" id="issuePurchaseAmount" min="0" step="0.01">
-            </div>
-            
-            <div class="search-section">
+            <div id="singleIssueSection">
               <div class="form-group">
-                <label class="form-label"><i class="fas fa-user-search"></i>Search Beneficiary <span class="required">*</span></label>
-                <div style="position: relative;">
-                  <input type="text" class="form-input" id="issueSearch" placeholder="Type name or email...">
-                  <div class="search-results" id="issueSearchResults"></div>
+                <label class="form-label"><i class="fas fa-building"></i>Company</label>
+                <input type="text" class="form-input" id="issueCompany" value="${companyName}" readonly>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label"><i class="fas fa-layer-group"></i>Template <span class="required">*</span></label>
+                <select class="form-select" id="issueTemplate">
+                  <option value="">Select template</option>
+                  ${issueTemplates.map(t => `
+                    <option value="${t.id}" 
+                      data-type="${t.voucher_type}" 
+                      data-value="${t.value_amount || t.percentage_value}"
+                      data-min="${t.min_purchase_amount || 0}">
+                      ${t.template_name} - ${t.value_amount ? `KES ${t.value_amount}` : `${t.percentage_value}%`}
+                    </option>
+                  `).join('')}
+                </select>
+              </div>
+              
+              <div id="issueTemplatePreview" class="hidden preview-card"></div>
+              
+              <div id="issuePurchaseContainer" class="hidden form-group">
+                <label class="form-label"><i class="fas fa-shopping-cart"></i>Purchase Amount (KES) <span class="required">*</span></label>
+                <input type="number" class="form-input" id="issuePurchaseAmount" min="0" step="0.01">
+              </div>
+              
+              <div class="search-section">
+                <div class="form-group">
+                  <label class="form-label"><i class="fas fa-user-search"></i>Search Beneficiary <span class="required">*</span></label>
+                  <div style="position: relative;">
+                    <input type="text" class="form-input" id="issueSearch" placeholder="Type name or email...">
+                    <div class="search-results" id="issueSearchResults"></div>
+                  </div>
                 </div>
               </div>
+              
+              <div id="issueSelectedCard" class="hidden selected-card"></div>
+              
+              <div class="form-group">
+                <label class="form-label"><i class="fas fa-calendar-alt"></i>Expiry (optional)</label>
+                <input type="date" class="form-input" id="issueExpiry">
+              </div>
+              
+              <button class="btn btn-success btn-block" id="issueSubmitBtn">
+                <i class="fas fa-paper-plane"></i> Issue Voucher
+              </button>
             </div>
             
-            <div id="issueSelectedCard" class="hidden selected-card"></div>
-            
-            <div class="form-group">
-              <label class="form-label"><i class="fas fa-calendar-alt"></i>Expiry (optional)</label>
-              <input type="date" class="form-input" id="issueExpiry">
+            <div id="bulkIssueSection" class="hidden">
+              <div class="form-group">
+                <label class="form-label"><i class="fas fa-building"></i>Company</label>
+                <input type="text" class="form-input" value="${companyName}" readonly>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label"><i class="fas fa-layer-group"></i>Template <span class="required">*</span></label>
+                <select class="form-select" id="bulkTemplate">
+                  <option value="">Select template</option>
+                  ${issueTemplates.filter(t => t.voucher_type === 'fixed_amount').map(t => `
+                    <option value="${t.id}" data-value="${t.value_amount}">
+                      ${t.template_name} - KES ${t.value_amount}
+                    </option>
+                  `).join('')}
+                </select>
+              </div>
+              
+              <div class="upload-area" onclick="document.getElementById('bulkFile').click()" ondragover="event.preventDefault()" ondrop="handleBulkFileDrop(event)">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Drag & drop CSV or click to browse</p>
+                <div class="upload-hint">Required: name, email, phone (optional)</div>
+                <input type="file" id="bulkFile" style="display:none;" accept=".csv" onchange="handleBulkFileSelect(this)">
+              </div>
+              
+              <button class="btn btn-outline btn-sm" onclick="downloadBulkTemplate()">
+                <i class="fas fa-download"></i> Download Template
+              </button>
+              
+              <div id="bulkPreview" class="hidden preview-card">
+                <div class="preview-title">Beneficiaries (${bulkBeneficiaries.length})</div>
+                <div class="csv-preview" id="bulkBeneficiariesList"></div>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label"><i class="fas fa-calendar-alt"></i>Default Expiry (days)</label>
+                <input type="number" class="form-input" id="bulkExpiry" value="30" min="1">
+              </div>
+              
+              <button class="btn btn-success btn-block" id="bulkSubmitBtn" onclick="processBulkIssue()">
+                <i class="fas fa-paper-plane"></i> Issue Bulk Vouchers
+              </button>
             </div>
-            
-            <button class="btn btn-success btn-block" id="issueSubmitBtn">
-              <i class="fas fa-paper-plane"></i> Issue Voucher
-            </button>
             
             <div id="issueResult" class="hidden result-summary"></div>
           </div>
         `;
         
-        // Attach event listeners
+        // Attach event listeners for single issue
         document.getElementById('issueTemplate').addEventListener('change', handleTemplateChange);
         document.getElementById('issueSearch').addEventListener('input', handleSearch);
         document.getElementById('issueSubmitBtn').addEventListener('click', issueVoucher);
@@ -1522,6 +1656,148 @@ window.showMobileProfile = async () => {
       } catch (err) {
         showToast('Failed to load issue data', true);
         container.innerHTML = '<div class="card">Error loading form</div>';
+      }
+    }
+    
+    window.setIssueTab = (tab) => {
+      issueTab = tab;
+      document.querySelectorAll('.issue-tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      document.getElementById('singleIssueSection').classList.toggle('hidden', tab !== 'single');
+      document.getElementById('bulkIssueSection').classList.toggle('hidden', tab !== 'bulk');
+    };
+    
+    window.downloadBulkTemplate = () => {
+      const csv = 'name,email,phone\nJohn Doe,john@example.com,0712345678\nJane Smith,jane@example.com,0798765432';
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'beneficiaries_template.csv';
+      link.click();
+    };
+    
+    window.handleBulkFileDrop = (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file) processBulkFile(file);
+    };
+    
+    window.handleBulkFileSelect = (input) => {
+      const file = input.files[0];
+      if (file) processBulkFile(file);
+    };
+    
+    function processBulkFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target.result;
+        const lines = content.split('\n').filter(l => l.trim());
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        
+        if (!headers.includes('name')) {
+          showToast('Missing required column: name', true);
+          return;
+        }
+        
+        bulkBeneficiaries = lines.slice(1).map(l => {
+          const values = l.split(',').map(v => v.trim());
+          return headers.reduce((obj, h, i) => ({ ...obj, [h]: values[i] }), {});
+        }).filter(row => row.name);
+        
+        if (bulkBeneficiaries.length === 0) {
+          showToast('No valid beneficiaries found', true);
+          return;
+        }
+        
+        // Update preview
+        const list = document.getElementById('bulkBeneficiariesList');
+        list.innerHTML = `
+          <div class="csv-preview-row header">
+            <span>Name</span>
+            <span>Email</span>
+            <span>Phone</span>
+          </div>
+          ${bulkBeneficiaries.slice(0, 5).map(b => `
+            <div class="csv-preview-row">
+              <span>${b.name}</span>
+              <span>${b.email || '-'}</span>
+              <span>${b.phone || '-'}</span>
+            </div>
+          `).join('')}
+          ${bulkBeneficiaries.length > 5 ? `<div class="csv-preview-row">... and ${bulkBeneficiaries.length - 5} more</div>` : ''}
+        `;
+        
+        document.getElementById('bulkPreview').classList.remove('hidden');
+        showToast(`Loaded ${bulkBeneficiaries.length} beneficiaries`);
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+    
+    async function processBulkIssue() {
+      const templateId = document.getElementById('bulkTemplate').value;
+      if (!templateId) {
+        showToast('Please select a template', true);
+        return;
+      }
+      
+      if (bulkBeneficiaries.length === 0) {
+        showToast('Please upload a CSV file', true);
+        return;
+      }
+      
+      const template = issueTemplates.find(t => t.id === templateId);
+      if (!template) return;
+      
+      const expiryDays = parseInt(document.getElementById('bulkExpiry').value) || 30;
+      const btn = document.getElementById('bulkSubmitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+      
+      let success = 0;
+      let failed = 0;
+      const errors = [];
+      
+      for (const beneficiary of bulkBeneficiaries) {
+        try {
+          const data = {
+            voucher_template_id: templateId,
+            tenant_id: currentUser.tenant_id,
+            beneficiary_name: beneficiary.name,
+            beneficiary_email: beneficiary.email || null,
+            beneficiary_phone: beneficiary.phone || null,
+            expires_at: new Date(Date.now() + expiryDays * 86400000).toISOString().split('T')[0]
+          };
+          
+          if (template.voucher_type === 'fixed_amount') {
+            data.original_value = parseFloat(template.value_amount);
+          }
+          
+          await apiCall('/vouchers', { method: 'POST', body: JSON.stringify(data) });
+          success++;
+        } catch (err) {
+          failed++;
+          errors.push(`${beneficiary.name}: ${err.message}`);
+        }
+      }
+      
+      const result = document.getElementById('issueResult');
+      result.className = `result-summary ${failed ? 'warning' : 'success'}`;
+      result.innerHTML = `
+        <strong>Bulk Issue Complete</strong><br>
+        Success: ${success}<br>
+        Failed: ${failed}
+        ${errors.length ? `<br><small>${errors.slice(0, 3).join('<br>')}</small>` : ''}
+      `;
+      result.classList.remove('hidden');
+      
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Issue Bulk Vouchers';
+      
+      if (success > 0) {
+        bulkBeneficiaries = [];
+        document.getElementById('bulkPreview').classList.add('hidden');
+        document.getElementById('bulkFile').value = '';
       }
     }
 
@@ -2465,53 +2741,97 @@ window.deleteCompany = async (id) => {
     showToast('Failed to delete company', true);
   }
 };
-    // ===== USERS SECTION =====
+    // ===== ENHANCED USERS SECTION WITH CRUD AND COMPANY ASSIGNMENT =====
     async function loadUsersSection(container) {
-      container.innerHTML = `
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">Users</h2>
-            <button class="btn btn-primary btn-sm" onclick="showCreateUser()">
-              <i class="fas fa-plus"></i> New
-            </button>
+      // Load companies for dropdown
+      try {
+        const companiesData = await apiCall('/tenants');
+        companies = companiesData.data || [];
+        
+        container.innerHTML = `
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Users</h2>
+              <button class="btn btn-primary btn-sm" onclick="showCreateUser()">
+                <i class="fas fa-plus"></i> New User
+              </button>
+            </div>
+            
+            <div id="createUserForm" class="hidden preview-card">
+              <div class="preview-title">Create New User</div>
+              <div class="form-group">
+                <label class="form-label">First Name</label>
+                <input type="text" class="form-input" id="userFirstName" placeholder="John">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Last Name</label>
+                <input type="text" class="form-input" id="userLastName" placeholder="Doe">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email *</label>
+                <input type="email" class="form-input" id="userEmail" placeholder="john@example.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="text" class="form-input" id="userPhone" placeholder="0712345678">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Company *</label>
+                <select class="form-select" id="userCompany">
+                  <option value="">Select company</option>
+                  ${companies.map(c => `<option value="${c.id}">${c.tenant_name || c.name}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Role *</label>
+                <select class="form-select" id="userRole">
+                  <option value="consumer">Consumer</option>
+                  <option value="client_admin">Client Admin</option>
+                  <option value="merchant_admin">Merchant Admin</option>
+                  <option value="merchant_staff">Merchant Staff</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-input" id="userPassword" placeholder="Leave blank for auto-generated">
+              </div>
+              <div style="display:flex; gap:0.5rem;">
+                <button class="btn btn-primary" onclick="createUser()">Create User</button>
+                <button class="btn btn-outline" onclick="hideCreateUser()">Cancel</button>
+              </div>
+            </div>
+            
+            <div id="usersList">Loading...</div>
           </div>
           
-          <div id="createUserForm" class="hidden preview-card">
-            <div class="preview-title">Create User</div>
-            <div class="form-group">
-              <label class="form-label">First Name</label>
-              <input type="text" class="form-input" id="userFirstName">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Last Name</label>
-              <input type="text" class="form-input" id="userLastName">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Email *</label>
-              <input type="email" class="form-input" id="userEmail">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Phone</label>
-              <input type="text" class="form-input" id="userPhone">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Role</label>
-              <select class="form-select" id="userRole">
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            <div style="display:flex; gap:0.5rem;">
-              <button class="btn btn-primary" onclick="createUser()">Create</button>
-              <button class="btn btn-outline" onclick="hideCreateUser()">Cancel</button>
+          <!-- Edit User Modal -->
+          <div id="editUserModal" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+            <div style="background: white; border-radius: var(--radius-lg); padding: 1.5rem; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 class="card-title">Edit User</h3>
+                <button class="close-btn" onclick="closeEditUserModal()"><i class="fas fa-times"></i></button>
+              </div>
+              <div id="editUserForm"></div>
             </div>
           </div>
           
-          <div id="usersList">Loading...</div>
-        </div>
-      `;
-      
-      await loadUsersList();
+          <!-- View User Modal -->
+          <div id="viewUserModal" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+            <div style="background: white; border-radius: var(--radius-lg); padding: 1.5rem; max-width: 500px; width: 90%;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 class="card-title">User Details</h3>
+                <button class="close-btn" onclick="closeViewUserModal()"><i class="fas fa-times"></i></button>
+              </div>
+              <div id="viewUserDetails"></div>
+            </div>
+          </div>
+        `;
+        
+        await loadUsersList();
+      } catch (err) {
+        showToast('Failed to load companies', true);
+        container.innerHTML = '<div class="card">Error loading form</div>';
+      }
     }
 
     window.showCreateUser = () => {
@@ -2520,36 +2840,52 @@ window.deleteCompany = async (id) => {
 
     window.hideCreateUser = () => {
       document.getElementById('createUserForm').classList.add('hidden');
-      ['userFirstName', 'userLastName', 'userEmail', 'userPhone'].forEach(id => {
+      resetUserForm();
+    };
+
+    function resetUserForm() {
+      ['userFirstName', 'userLastName', 'userEmail', 'userPhone', 'userPassword'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
-    };
+      const companySelect = document.getElementById('userCompany');
+      if (companySelect) companySelect.value = '';
+      const roleSelect = document.getElementById('userRole');
+      if (roleSelect) roleSelect.value = 'consumer';
+    }
 
     window.createUser = async () => {
       const firstName = document.getElementById('userFirstName').value;
       const lastName = document.getElementById('userLastName').value;
       const email = document.getElementById('userEmail').value;
+      const phone = document.getElementById('userPhone').value;
+      const companyId = document.getElementById('userCompany').value;
+      const role = document.getElementById('userRole').value;
       
-      if (!email) {
-        showToast('Email required', true);
+      if (!email || !companyId || !role) {
+        showToast('Email, company and role are required', true);
         return;
       }
       
       try {
-        await apiCall('/users', {
-          method: 'POST',
-          body: JSON.stringify({
-            tenant_id: currentUser.tenant_id,
-            first_name: firstName,
-            last_name: lastName,
-            email: email,
-            phone: document.getElementById('userPhone').value,
-            role: document.getElementById('userRole').value,
-            status: 'active'
-          })
-        });
-        showToast('User created');
+        const userData = {
+          tenant_id: companyId,
+          email: email,
+          first_name: firstName,
+          last_name: lastName,
+          phone: phone || null,
+          role: role,
+          status: 'active'
+        };
+        
+        // If password provided, add it
+        const password = document.getElementById('userPassword').value;
+        if (password) {
+          userData.password = password;
+        }
+        
+        await apiCall('/users', { method: 'POST', body: JSON.stringify(userData) });
+        showToast('User created successfully');
         hideCreateUser();
         await loadUsersList();
       } catch (err) {
@@ -2566,13 +2902,31 @@ window.deleteCompany = async (id) => {
         const users = data.data || [];
         
         if (users.length) {
-          list.innerHTML = users.map(u => `
-            <div class="list-item">
-              <div class="list-title">${u.first_name || ''} ${u.last_name || ''}</div>
-              <div class="list-sub">${u.email}</div>
-              <div class="list-meta">${u.phone || '-'} · ${u.role || 'user'}</div>
-            </div>
-          `).join('');
+          list.innerHTML = users.map(u => {
+            const company = companies.find(c => c.id === u.tenant_id);
+            const companyName = company ? (company.tenant_name || company.name) : 'Unknown';
+            return `
+              <div class="list-item">
+                <div class="list-row">
+                  <span class="list-title">${u.first_name || ''} ${u.last_name || ''}</span>
+                  <span class="badge badge-${u.status === 'active' ? 'success' : 'danger'}">${u.status || 'active'}</span>
+                </div>
+                <div class="list-sub">${u.email}</div>
+                <div class="list-meta">${u.phone || '-'} · ${u.role || 'user'} · ${companyName}</div>
+                <div class="list-actions">
+                  <button class="btn btn-outline btn-sm" onclick="viewUser('${u.id}')">
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                  <button class="btn btn-outline btn-sm" onclick="editUser('${u.id}')">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                  <button class="btn btn-outline btn-sm" style="color: var(--danger);" onclick="deleteUser('${u.id}')">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('');
         } else {
           list.innerHTML = '<div class="text-center list-item">No users found</div>';
         }
@@ -2581,6 +2935,162 @@ window.deleteCompany = async (id) => {
         showToast('Failed to load users', true);
       }
     }
+
+    window.viewUser = async (id) => {
+      try {
+        const data = await apiCall(`/users/${id}`);
+        const user = data.data || data;
+        const company = companies.find(c => c.id === user.tenant_id);
+        const companyName = company ? (company.tenant_name || company.name) : 'Unknown';
+        
+        const details = document.getElementById('viewUserDetails');
+        details.innerHTML = `
+          <div style="margin-bottom: 1rem;">
+            <div style="font-weight: 600; margin-bottom: 0.5rem;">${user.first_name || ''} ${user.last_name || ''}</div>
+            <div class="badge ${user.status === 'active' ? 'badge-success' : 'badge-danger'}" style="margin-bottom: 1rem;">
+              ${user.status || 'active'}
+            </div>
+            
+            <table style="width: 100%;">
+              <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Email:</td><td>${user.email || '-'}</td></tr>
+              <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Phone:</td><td>${user.phone || '-'}</td></tr>
+              <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Role:</td><td>${user.role || 'user'}</td></tr>
+              <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Company:</td><td>${companyName}</td></tr>
+              <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Email Verified:</td><td>${user.is_email_verified ? '✅' : '❌'}</td></tr>
+              <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Phone Verified:</td><td>${user.is_phone_verified ? '✅' : '❌'}</td></tr>
+              <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Last Login:</td><td>${user.last_login_at ? new Date(user.last_login_at).toLocaleString() : 'Never'}</td></tr>
+              <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Created:</td><td>${new Date(user.created_at).toLocaleString()}</td></tr>
+            </table>
+          </div>
+        `;
+        
+        document.getElementById('viewUserModal').classList.remove('hidden');
+      } catch (err) {
+        showToast('Failed to load user details', true);
+      }
+    };
+
+    window.closeViewUserModal = () => {
+      document.getElementById('viewUserModal').classList.add('hidden');
+    };
+
+    window.editUser = async (id) => {
+      try {
+        const data = await apiCall(`/users/${id}`);
+        const user = data.data || data;
+        
+        const form = document.getElementById('editUserForm');
+        form.innerHTML = `
+          <input type="hidden" id="editUserId" value="${user.id}">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input type="text" class="form-input" id="editUserFirstName" value="${user.first_name || ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input type="text" class="form-input" id="editUserLastName" value="${user.last_name || ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email *</label>
+            <input type="email" class="form-input" id="editUserEmail" value="${user.email || ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input type="text" class="form-input" id="editUserPhone" value="${user.phone || ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Company *</label>
+            <select class="form-select" id="editUserCompany">
+              <option value="">Select company</option>
+              ${companies.map(c => `<option value="${c.id}" ${c.id === user.tenant_id ? 'selected' : ''}>${c.tenant_name || c.name}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Role *</label>
+            <select class="form-select" id="editUserRole">
+              <option value="consumer" ${user.role === 'consumer' ? 'selected' : ''}>Consumer</option>
+              <option value="client_admin" ${user.role === 'client_admin' ? 'selected' : ''}>Client Admin</option>
+              <option value="merchant_admin" ${user.role === 'merchant_admin' ? 'selected' : ''}>Merchant Admin</option>
+              <option value="merchant_staff" ${user.role === 'merchant_staff' ? 'selected' : ''}>Merchant Staff</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="editUserStatus">
+              <option value="active" ${user.status === 'active' ? 'selected' : ''}>Active</option>
+              <option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+              <option value="suspended" ${user.status === 'suspended' ? 'selected' : ''}>Suspended</option>
+            </select>
+          </div>
+          <div style="display:flex; gap:0.5rem; margin-top: 1rem;">
+            <button class="btn btn-primary" onclick="updateUser()">Update User</button>
+            <button class="btn btn-outline" onclick="closeEditUserModal()">Cancel</button>
+          </div>
+        `;
+        
+        document.getElementById('editUserModal').classList.remove('hidden');
+      } catch (err) {
+        showToast('Failed to load user for editing', true);
+      }
+    };
+
+    window.closeEditUserModal = () => {
+      document.getElementById('editUserModal').classList.add('hidden');
+    };
+
+    window.updateUser = async () => {
+      const id = document.getElementById('editUserId').value;
+      const firstName = document.getElementById('editUserFirstName').value;
+      const lastName = document.getElementById('editUserLastName').value;
+      const email = document.getElementById('editUserEmail').value;
+      const phone = document.getElementById('editUserPhone').value;
+      const companyId = document.getElementById('editUserCompany').value;
+      const role = document.getElementById('editUserRole').value;
+      const status = document.getElementById('editUserStatus').value;
+      
+      if (!email || !companyId || !role) {
+        showToast('Email, company and role are required', true);
+        return;
+      }
+      
+      try {
+        const userData = {
+          first_name: firstName,
+          last_name: lastName,
+          email: email,
+          phone: phone || null,
+          tenant_id: companyId,
+          role: role,
+          status: status
+        };
+        
+        await apiCall(`/users/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(userData)
+        });
+        showToast('User updated successfully');
+        closeEditUserModal();
+        await loadUsersList();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    };
+
+    window.deleteUser = async (id) => {
+      if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        return;
+      }
+      
+      try {
+        await apiCall(`/users/${id}`, {
+          method: 'DELETE'
+        });
+        showToast('User deleted successfully');
+        await loadUsersList();
+      } catch (err) {
+        showToast('Failed to delete user', true);
+      }
+    };
 
     // ===== BULK USERS SECTION =====
     async function loadBulkUsersSection(container) {
@@ -2604,10 +3114,20 @@ window.deleteCompany = async (id) => {
           </div>
           
           <div class="form-group">
+            <label class="form-label">Default Company *</label>
+            <select class="form-select" id="bulkUserCompany">
+              <option value="">Select company</option>
+              ${companies.map(c => `<option value="${c.id}">${c.tenant_name || c.name}</option>`).join('')}
+            </select>
+          </div>
+          
+          <div class="form-group">
             <label class="form-label">Default Role</label>
             <select class="form-select" id="bulkUserRole">
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
+              <option value="consumer">Consumer</option>
+              <option value="client_admin">Client Admin</option>
+              <option value="merchant_admin">Merchant Admin</option>
+              <option value="merchant_staff">Merchant Staff</option>
             </select>
           </div>
           
@@ -2620,7 +3140,7 @@ window.deleteCompany = async (id) => {
     }
 
     window.downloadUserTemplate = () => {
-      const csv = 'first_name,last_name,email,phone,role\nJohn,Doe,john@example.com,0712345678,user\nJane,Smith,jane@example.com,0798765432,admin';
+      const csv = 'first_name,last_name,email,phone\nJohn,Doe,john@example.com,0712345678\nJane,Smith,jane@example.com,0798765432';
       const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -2680,13 +3200,19 @@ window.deleteCompany = async (id) => {
         return;
       }
       
+      const companyId = document.getElementById('bulkUserCompany').value;
+      if (!companyId) {
+        showToast('Please select a default company', true);
+        return;
+      }
+      
       let success = 0, failed = 0;
       const errors = [];
       
       for (const row of importFileData.data) {
         try {
           const userData = {
-            tenant_id: currentUser.tenant_id,
+            tenant_id: companyId,
             first_name: row.first_name,
             last_name: row.last_name,
             email: row.email,

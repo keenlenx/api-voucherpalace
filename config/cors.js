@@ -32,7 +32,7 @@ const isOriginAllowed = (origin) => {
     'http://api:3006',
     'http://backend:3006',
     'http://voucher-api:3006',
-    'http://voucher-backend:3006'
+    'http://voucher-db:3006'
   ];
   if (dockerServices.some(service => origin.startsWith(service))) {
     return true;

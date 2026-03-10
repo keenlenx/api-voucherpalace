@@ -29,7 +29,7 @@ const swaggerOptions = {
         description: 'Local Network Server'
       },
       {
-        url: `https://api.yourdomain.com`,
+        url: `http://voucherapp.agiza.co.ke:3006/`,
         description: 'Production Server',
       },
     ],

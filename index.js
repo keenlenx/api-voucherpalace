@@ -31,6 +31,12 @@ app.use(express.static(path.join(__dirname, 'web')));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'web', 'index.html'));
 });
+app.get('/user', (req, res) => {
+  res.sendFile(path.join(__dirname, 'web', 'user.html'));
+});
+app.get('/cafe', (req, res) => {
+  res.sendFile(path.join(__dirname, 'web', 'cafe.html'));
+});
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, swaggerUiOptions));
 
 app.get('/health', async (req, res) => {
