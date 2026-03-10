@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voucher Platform - Authentication</title>
+    <!-- Add Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;
+    background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding-top: 20px;
+}
+
+/* Container */
+
+.container{
+    width:100%;
+    padding:2.2rem 2rem;
+    background:white;
+    border-radius:20px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.25);
+    animation:slideUp .5s ease;
+}
+
+@keyframes slideUp{
+    from{
+        opacity:0;
+        transform:translateY(30px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+/* Headings */
+
+h1{
+    text-align:center;
+    color:#333;
+    margin-bottom:.5rem;
+    font-size:1.9rem;
+    font-weight:600;
+}
+
+.subtitle{
+    text-align:center;
+    color:#666;
+    margin-bottom:2rem;
+    font-size:.95rem;
+}
+
+/* Identifier Toggle */
+
+.identifier-toggle{
+    display:flex;
+    gap:.5rem;
+    margin-bottom:2rem;
+    background:#f5f5f5;
+    padding:.4rem;
+    border-radius:40px;
+}
+
+.identifier-toggle button{
+    flex:1;
+    padding:.7rem;
+    border:none;
+    background:transparent;
+    border-radius:40px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:.9rem;
+    transition:.25s;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:.4rem;
+    color:#666;
+}
+
+.identifier-toggle button.active{
+    background:white;
+    box-shadow:0 4px 10px rgba(0,0,0,.08);
+    color:#667eea;
+}
+
+.identifier-toggle button:hover{
+    background:#ececec;
+}
+
+/* Input */
+
+.input-group{
+    position:relative;
+    margin-bottom:1.4rem;
+}
+
+.input-group i{
+    position:absolute;
+    left:14px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#aaa;
+    font-size:1rem;
+    transition:.2s;
+}
+
+.input-group input{
+    width:100%;
+    padding:.9rem .9rem .9rem 42px;
+    border:2px solid #e0e0e0;
+    border-radius:10px;
+    font-size:.95rem;
+    transition:.25s;
+    background:#fafafa;
+}
+
+.input-group input:focus{
+    outline:none;
+    border-color:#667eea;
+    background:white;
+    box-shadow:0 0 0 3px rgba(102,126,234,.12);
+}
+
+.input-group input:focus ~ i{
+    color:#667eea;
+}
+
+/* Labels */
+
+label{
+    display:block;
+    margin-bottom:.4rem;
+    color:#555;
+    font-weight:500;
+    font-size:.85rem;
+    margin-left:.2rem;
+}
+
+/* Buttons */
+
+.btn{
+    width:100%;
+    padding:.95rem;
+    background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    color:white;
+    border:none;
+    border-radius:10px;
+    font-size:.95rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:.25s;
+    margin-top:.5rem;
+    box-shadow:0 4px 15px rgba(102,126,234,.25);
+}
+
+.btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 6px 20px rgba(102,126,234,.35);
+}
+
+.btn:disabled{
+    opacity:.65;
+    cursor:not-allowed;
+    transform:none;
+}
+
+.btn-secondary{
+    background:#666;
+    box-shadow:0 4px 15px rgba(0,0,0,.1);
+}
+
+/* Messages */
+
+.error{
+    color:#e74c3c;
+    font-size:.85rem;
+    margin-top:.75rem;
+    display:none;
+    padding:.7rem;
+    background:#fff0f0;
+    border-radius:6px;
+    text-align:center;
+    border-left:3px solid #e74c3c;
+}
+
+.success{
+    color:#27ae60;
+    font-size:.85rem;
+    margin-top:.75rem;
+    display:none;
+    padding:.7rem;
+    background:#e8f5e9;
+    border-radius:6px;
+    text-align:center;
+    border-left:3px solid #27ae60;
+}
+
+.error.show,
+.success.show{
+    display:block;
+}
+
+/* Loading */
+
+.loading{
+    display:none;
+    text-align:center;
+    margin-top:1rem;
+}
+
+.loading.show{
+    display:block;
+}
+
+.spinner{
+    border:3px solid #f3f3f3;
+    border-top:3px solid #667eea;
+    border-radius:50%;
+    width:26px;
+    height:26px;
+    animation:spin 1s linear infinite;
+    margin:auto;
+}
+
+@keyframes spin{
+    0%{transform:rotate(0deg)}
+    100%{transform:rotate(360deg)}
+}
+
+/* Links */
+
+.info-text{
+    text-align:center;
+    margin-top:1.4rem;
+    color:#666;
+    font-size:.85rem;
+}
+
+.info-text a,
+.forgot-password a,
+.back-to-login a{
+    color:#667eea;
+    text-decoration:none;
+    font-weight:600;
+}
+
+.info-text a:hover,
+.forgot-password a:hover,
+.back-to-login a:hover{
+    text-decoration:underline;
+}
+
+/* Forgot password */
+
+.forgot-password{
+    text-align:right;
+    margin-top:-.9rem;
+    margin-bottom:1.4rem;
+}
+
+/* Forms */
+
+.form{
+    display:none;
+}
+
+.form.active{
+    display:block;
+}
+
+/* Password Strength */
+
+.strength-meter{
+    height:4px;
+    background:#e0e0e0;
+    border-radius:2px;
+    margin-top:.5rem;
+}
+
+.strength-meter-fill{
+    height:100%;
+    width:0%;
+    transition:.3s;
+}
+
+.strength-weak{background:#e74c3c;}
+.strength-fair{background:#f39c12;}
+.strength-good{background:#3498db;}
+.strength-strong{background:#27ae60;}
+
+/* Small text */
+
+.phone-hint{
+    font-size:.75rem;
+    color:#999;
+    margin-top:.25rem;
+}
+
+/* Divider */
+
+.divider{
+    display:flex;
+    align-items:center;
+    text-align:center;
+    margin:1.4rem 0;
+}
+
+.divider::before,
+.divider::after{
+    content:'';
+    flex:1;
+    border-bottom:1px solid #e0e0e0;
+}
+
+.divider span{
+    padding:0 .8rem;
+    color:#999;
+    font-size:.8rem;
+}
+
+/* Mobile */
+
+@media(max-width:480px){
+
+.container{
+    width: 80%;
+    padding:2rem 1.5rem;
+}
+
+h1{
+    font-size:1.6rem;
+}
+
+}
+/* ================= COMPACT DESKTOP MODE ================= */
+@media (min-width: 900px) {
+
+    .container {
+        max-width: 360px;
+        padding: 1.4rem 1.3rem;
+        border-radius: 18px;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+        margin-bottom: 0.2rem;
+    }
+
+    .subtitle {
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+    }
+
+    .identifier-toggle {
+        margin-bottom: 1rem;
+        padding: 0.35rem;
+    }
+
+    .identifier-toggle button {
+        padding: 0.55rem;
+        font-size: 0.85rem;
+    }
+
+    .input-group {
+        margin-bottom: 0.8rem;
+    }
+
+    .input-group input {
+        padding: 0.75rem 0.75rem 0.75rem 38px;
+        font-size: 0.9rem;
+        border-radius: 10px;
+    }
+
+    .input-group i {
+        left: 12px;
+        font-size: 0.95rem;
+    }
+
+    label {
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .btn {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        border-radius: 10px;
+    }
+
+    .divider {
+        margin: 0.8rem 0;
+    }
+
+    .info-text {
+        font-size: 0.8rem;
+        margin-top: 0.8rem;
+    }
+
+    .forgot-password {
+        margin-top: -0.6rem;
+        margin-bottom: 1rem;
+    }
+
+}
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎫 Voucher Platform</h1>
+        <p class="subtitle" id="page-subtitle">Login to manage your vouchers</p>
+
+        <!-- Login Section -->
+        <div id="login-section">
+            <!-- Identifier Type Toggle -->
+            <div class="identifier-toggle">
+                <button type="button" id="toggle-email" class="active" onclick="setIdentifierType('email')">
+                    <i class="fas fa-envelope"></i> Email
+                </button>
+                <button type="button" id="toggle-phone" onclick="setIdentifierType('phone')">
+                    <i class="fas fa-phone"></i> Phone
+                </button>
+            </div>
+
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <i class="fas fa-envelope" id="identifier-icon"></i>
+                    <input type="text" id="login-identifier" placeholder="Enter your email" required>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="login-password" placeholder="Enter your password" required>
+                </div>
+
+                <div class="forgot-password">
+                    <a onclick="showForgotPassword()">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="btn" id="login-btn">Login</button>
+                
+                <div class="error" id="login-error"></div>
+                <div class="loading" id="login-loading">
+                    <div class="spinner"></div>
+                </div>
+            </form>
+
+            <div class="divider">
+                <span>New to Voucher Platform?</span>
+            </div>
+
+            <div class="info-text">
+                <p><a onclick="showRegister()">Create an account</a></p>
+            </div>
+        </div>
+
+        <!-- Register Section -->
+        <div id="register-section" style="display: none;">
+            <form id="register-form" onsubmit="handleRegister(event)">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="register-firstname" placeholder="First name" required>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="register-lastname" placeholder="Last name" required>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="register-email" placeholder="Email address" required>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-phone"></i>
+                    <input type="tel" id="register-phone" placeholder="Phone number" required>
+                    <div class="phone-hint">Format: +254712345678 or 0712345678</div>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="register-password" placeholder="Password" required onkeyup="checkPasswordStrength()">
+                    <div class="strength-meter">
+                        <div class="strength-meter-fill" id="password-strength"></div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="register-confirm" placeholder="Confirm password" required onkeyup="checkPasswordMatch()">
+                    <div class="error" id="password-match-error"></div>
+                </div>
+
+                <button type="submit" class="btn" id="register-btn">Create Account</button>
+                
+                <div class="error" id="register-error"></div>
+                <div class="success" id="register-success"></div>
+                <div class="loading" id="register-loading">
+                    <div class="spinner"></div>
+                </div>
+            </form>
+
+            <div class="back-to-login">
+                <a onclick="showLogin()">← Back to Login</a>
+            </div>
+        </div>
+
+        <!-- Forgot Password Section -->
+        <div id="forgot-section" style="display: none;">
+            <form id="forgot-form" onsubmit="handleForgotPassword(event)">
+                <p style="margin-bottom: 1.5rem; color: #666; text-align: center;">Enter your email address and we'll send you a link to reset your password.</p>
+                
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="forgot-email" placeholder="Email address" required>
+                </div>
+
+                <button type="submit" class="btn" id="forgot-btn">Send Reset Link</button>
+                
+                <div class="success" id="forgot-success"></div>
+                <div class="error" id="forgot-error"></div>
+                <div class="loading" id="forgot-loading">
+                    <div class="spinner"></div>
+                </div>
+            </form>
+
+            <div class="back-to-login">
+                <a onclick="showLogin()">← Back to Login</a>
+            </div>
+        </div>
+
+        <!-- Reset Password Section -->
+        <div id="reset-section" style="display: none;">
+            <form id="reset-form" onsubmit="handleResetPassword(event)">
+                <p style="margin-bottom: 1.5rem; color: #666; text-align: center;">Enter your new password below.</p>
+                
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="reset-password" placeholder="New password" required onkeyup="checkResetPasswordStrength()">
+                    <div class="strength-meter">
+                        <div class="strength-meter-fill" id="reset-password-strength"></div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="reset-confirm" placeholder="Confirm new password" required onkeyup="checkResetPasswordMatch()">
+                    <div class="error" id="reset-match-error"></div>
+                </div>
+
+                <button type="submit" class="btn" id="reset-btn">Reset Password</button>
+                
+                <div class="success" id="reset-success"></div>
+                <div class="error" id="reset-error"></div>
+                <div class="loading" id="reset-loading">
+                    <div class="spinner"></div>
+                </div>
+            </form>
+
+            <div class="back-to-login">
+                <a onclick="showLogin()">← Back to Login</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        let identifierType = 'email'; // 'email' or 'phone'
+
+        // ===== IDENTIFIER TOGGLE =====
+        function setIdentifierType(type) {
+            identifierType = type;
+            
+            // Update toggle buttons
+            document.getElementById('toggle-email').classList.toggle('active', type === 'email');
+            document.getElementById('toggle-phone').classList.toggle('active', type === 'phone');
+            
+            // Update label, placeholder and icon
+            const input = document.getElementById('login-identifier');
+            const icon = document.getElementById('identifier-icon');
+            
+            if (type === 'email') {
+                input.placeholder = 'Enter your email';
+                input.type = 'email';
+                icon.className = 'fas fa-envelope';
+            } else {
+                input.placeholder = 'Enter your phone number';
+                input.type = 'tel';
+                icon.className = 'fas fa-phone';
+            }
+        }
+
+        // ===== NAVIGATION =====
+        function showLogin() {
+            document.getElementById('login-section').style.display = 'block';
+            document.getElementById('register-section').style.display = 'none';
+            document.getElementById('forgot-section').style.display = 'none';
+            document.getElementById('reset-section').style.display = 'none';
+            document.getElementById('page-subtitle').textContent = 'Login to manage your vouchers';
+            clearMessages();
+            window.history.replaceState({}, document.title, '/');
+        }
+
+        function showRegister() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('register-section').style.display = 'block';
+            document.getElementById('forgot-section').style.display = 'none';
+            document.getElementById('reset-section').style.display = 'none';
+            document.getElementById('page-subtitle').textContent = 'Create a new account';
+            clearMessages();
+        }
+
+        function showForgotPassword() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('register-section').style.display = 'none';
+            document.getElementById('forgot-section').style.display = 'block';
+            document.getElementById('reset-section').style.display = 'none';
+            document.getElementById('page-subtitle').textContent = 'Reset your password';
+            clearMessages();
+        }
+
+        function showReset(token) {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('register-section').style.display = 'none';
+            document.getElementById('forgot-section').style.display = 'none';
+            document.getElementById('reset-section').style.display = 'block';
+            document.getElementById('page-subtitle').textContent = 'Set new password';
+            document.getElementById('reset-form').dataset.token = token;
+            clearMessages();
+        }
+
+        function clearMessages() {
+            document.querySelectorAll('.error, .success').forEach(el => {
+                el.classList.remove('show');
+                el.innerHTML = '';
+            });
+        }
+
+        // ===== PASSWORD VALIDATION =====
+        function checkPasswordStrength() {
+            const password = document.getElementById('register-password').value;
+            const strengthFill = document.getElementById('password-strength');
+            
+            const requirements = {
+                length: password.length >= 8,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /[0-9]/.test(password)
+            };
+
+            const strength = Object.values(requirements).filter(Boolean).length;
+            
+            strengthFill.className = 'strength-meter-fill';
+            if (strength <= 1) strengthFill.classList.add('strength-weak');
+            else if (strength === 2) strengthFill.classList.add('strength-fair');
+            else if (strength === 3) strengthFill.classList.add('strength-good');
+            else strengthFill.classList.add('strength-strong');
+        }
+
+        function checkResetPasswordStrength() {
+            const password = document.getElementById('reset-password').value;
+            const strengthFill = document.getElementById('reset-password-strength');
+            
+            const strength = [
+                password.length >= 8,
+                /[A-Z]/.test(password),
+                /[a-z]/.test(password),
+                /[0-9]/.test(password)
+            ].filter(Boolean).length;
+            
+            strengthFill.className = 'strength-meter-fill';
+            if (strength <= 1) strengthFill.classList.add('strength-weak');
+            else if (strength === 2) strengthFill.classList.add('strength-fair');
+            else if (strength === 3) strengthFill.classList.add('strength-good');
+            else strengthFill.classList.add('strength-strong');
+        }
+
+        function checkPasswordMatch() {
+            const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-confirm').value;
+            const errorEl = document.getElementById('password-match-error');
+            
+            if (confirm && password !== confirm) {
+                errorEl.innerHTML = 'Passwords do not match';
+                errorEl.classList.add('show');
+            } else {
+                errorEl.classList.remove('show');
+            }
+        }
+
+        function checkResetPasswordMatch() {
+            const password = document.getElementById('reset-password').value;
+            const confirm = document.getElementById('reset-confirm').value;
+            const errorEl = document.getElementById('reset-match-error');
+            
+            if (confirm && password !== confirm) {
+                errorEl.innerHTML = 'Passwords do not match';
+                errorEl.classList.add('show');
+            } else {
+                errorEl.classList.remove('show');
+            }
+        }
+
+        // ===== API HANDLERS =====
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const identifier = document.getElementById('login-identifier').value.trim();
+            const password = document.getElementById('login-password').value;
+            
+            // Validate phone number if phone type
+            if (identifierType === 'phone') {
+                const phoneRegex = /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/;
+                if (!phoneRegex.test(identifier)) {
+                    document.getElementById('login-error').innerHTML = 'Please enter a valid phone number';
+                    document.getElementById('login-error').classList.add('show');
+                    return;
+                }
+            }
+            
+            document.getElementById('login-btn').disabled = true;
+            document.getElementById('login-loading').classList.add('show');
+            document.getElementById('login-error').classList.remove('show');
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.token) {
+                    // Store complete user data with all fields
+                    const userData = {
+                        id: data.user?.id || data.user_id,
+                        email: data.user?.email || data.email,
+                        first_name: data.user?.first_name || '',
+                        last_name: data.user?.last_name || '',
+                        role: data.user?.role || 'User',
+                        tenant_id: data.user?.tenant_id,
+                        created_at: data.user?.created_at || new Date().toISOString(),
+                        last_login_at: new Date().toISOString()
+                    };
+                    
+                    localStorage.setItem('token', data.token);
+                    if (data.refresh_token) {
+                        localStorage.setItem('refreshToken', data.refresh_token);
+                    }
+                    localStorage.setItem('user', JSON.stringify(userData));
+                    
+                    window.location.href = '/dashboard.html';
+                } else {
+                    document.getElementById('login-error').innerHTML = data.error || 'Login failed';
+                    document.getElementById('login-error').classList.add('show');
+                }
+            } catch (err) {
+                document.getElementById('login-error').innerHTML = 'Network error. Please try again.';
+                document.getElementById('login-error').classList.add('show');
+            } finally {
+                document.getElementById('login-btn').disabled = false;
+                document.getElementById('login-loading').classList.remove('show');
+            }
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+            
+            const first_name = document.getElementById('register-firstname').value.trim();
+            const last_name = document.getElementById('register-lastname').value.trim();
+            const email = document.getElementById('register-email').value.trim();
+            const phone = document.getElementById('register-phone').value.trim();
+            const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-confirm').value;
+
+            // Validate phone
+            const phoneRegex = /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/;
+            if (!phoneRegex.test(phone)) {
+                document.getElementById('register-error').innerHTML = 'Please enter a valid phone number';
+                document.getElementById('register-error').classList.add('show');
+                return;
+            }
+
+            if (password !== confirm) {
+                document.getElementById('register-error').innerHTML = 'Passwords do not match';
+                document.getElementById('register-error').classList.add('show');
+                return;
+            }
+
+            if (password.length < 8) {
+                document.getElementById('register-error').innerHTML = 'Password must be at least 8 characters';
+                document.getElementById('register-error').classList.add('show');
+                return;
+            }
+            
+            document.getElementById('register-btn').disabled = true;
+            document.getElementById('register-loading').classList.add('show');
+            document.getElementById('register-error').classList.remove('show');
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email, 
+                        password, 
+                        first_name, 
+                        last_name, 
+                        phone
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    document.getElementById('register-success').innerHTML = 'Registration successful! Redirecting to login...';
+                    document.getElementById('register-success').classList.add('show');
+                    
+                    document.getElementById('register-form').reset();
+                    
+                    setTimeout(() => {
+                        showLogin();
+                        document.getElementById('login-identifier').value = email;
+                        setIdentifierType('email');
+                    }, 2000);
+                } else {
+                    document.getElementById('register-error').innerHTML = data.error || 'Registration failed';
+                    document.getElementById('register-error').classList.add('show');
+                }
+            } catch (err) {
+                document.getElementById('register-error').innerHTML = 'Network error. Please try again.';
+                document.getElementById('register-error').classList.add('show');
+            } finally {
+                document.getElementById('register-btn').disabled = false;
+                document.getElementById('register-loading').classList.remove('show');
+            }
+        }
+
+        async function handleForgotPassword(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('forgot-email').value.trim();
+            
+            document.getElementById('forgot-btn').disabled = true;
+            document.getElementById('forgot-loading').classList.add('show');
+            document.getElementById('forgot-error').classList.remove('show');
+            document.getElementById('forgot-success').classList.remove('show');
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('forgot-success').innerHTML = 'If an account exists with this email, you will receive a password reset link.';
+                    document.getElementById('forgot-success').classList.add('show');
+                    document.getElementById('forgot-email').value = '';
+                } else {
+                    document.getElementById('forgot-error').innerHTML = data.error || 'Request failed';
+                    document.getElementById('forgot-error').classList.add('show');
+                }
+            } catch (err) {
+                document.getElementById('forgot-error').innerHTML = 'Network error. Please try again.';
+                document.getElementById('forgot-error').classList.add('show');
+            } finally {
+                document.getElementById('forgot-btn').disabled = false;
+                document.getElementById('forgot-loading').classList.remove('show');
+            }
+        }
+
+        async function handleResetPassword(event) {
+            event.preventDefault();
+            
+            const token = document.getElementById('reset-form').dataset.token;
+            const password = document.getElementById('reset-password').value;
+            const confirm = document.getElementById('reset-confirm').value;
+
+            if (password !== confirm) {
+                document.getElementById('reset-error').innerHTML = 'Passwords do not match';
+                document.getElementById('reset-error').classList.add('show');
+                return;
+            }
+
+            if (password.length < 8) {
+                document.getElementById('reset-error').innerHTML = 'Password must be at least 8 characters';
+                document.getElementById('reset-error').classList.add('show');
+                return;
+            }
+            
+            document.getElementById('reset-btn').disabled = true;
+            document.getElementById('reset-loading').classList.add('show');
+            document.getElementById('reset-error').classList.remove('show');
+            document.getElementById('reset-success').classList.remove('show');
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, new_password: password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('reset-success').innerHTML = 'Password reset successful! Redirecting to login...';
+                    document.getElementById('reset-success').classList.add('show');
+                    
+                    setTimeout(() => {
+                        showLogin();
+                    }, 2000);
+                } else {
+                    document.getElementById('reset-error').innerHTML = data.error || 'Reset failed';
+                    document.getElementById('reset-error').classList.add('show');
+                }
+            } catch (err) {
+                document.getElementById('reset-error').innerHTML = 'Network error. Please try again.';
+                document.getElementById('reset-error').classList.add('show');
+            } finally {
+                document.getElementById('reset-btn').disabled = false;
+                document.getElementById('reset-loading').classList.remove('show');
+            }
+        }
+
+        // ===== CHECK RESET TOKEN IN URL =====
+        function checkResetToken() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            if (token) {
+                showReset(token);
+            }
+        }
+
+        // ===== INITIALIZE =====
+        window.onload = function() {
+            setIdentifierType('email');
+            checkResetToken();
+            
+            const token = localStorage.getItem('token');
+            if (token) {
+                fetch(`${API_URL}/auth/verify`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/dashboard.html';
+                    } else {
+                        localStorage.clear();
+                    }
+                })
+                .catch(() => {
+                    localStorage.clear();
+                });
+            }
+        };
+
+        // Make functions globally available
+        window.showLogin = showLogin;
+        window.showRegister = showRegister;
+        window.showForgotPassword = showForgotPassword;
+        window.setIdentifierType = setIdentifierType;
+        window.checkPasswordStrength = checkPasswordStrength;
+        window.checkResetPasswordStrength = checkResetPasswordStrength;
+        window.checkPasswordMatch = checkPasswordMatch;
+        window.checkResetPasswordMatch = checkResetPasswordMatch;
+        window.handleLogin = handleLogin;
+        window.handleRegister = handleRegister;
+        window.handleForgotPassword = handleForgotPassword;
+        window.handleResetPassword = handleResetPassword;
+    </script>
+</body>
+</html>

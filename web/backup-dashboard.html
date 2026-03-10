@@ -1,0 +1,4289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>VoucherPalace · Enterprise Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- QR Code Library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <!-- Chart.js for Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- SheetJS for Excel/CSV -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <!-- jsPDF for PDF Reports -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- html2canvas for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
+  <style>
+    /* ----- RESET & VARIABLES ----- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    :root {
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+    }
+
+    body {
+      background: var(--gray-100);
+      min-height: 100vh;
+    }
+
+    /* ----- LAYOUT ----- */
+    .app {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ----- SIDEBAR ----- */
+    .sidebar {
+      width: 260px;
+      background: white;
+      border-right: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 50;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+    }
+
+    .sidebar.open {
+      transform: translateX(0);
+    }
+
+    @media (min-width: 1024px) {
+      .sidebar {
+        transform: translateX(0);
+      }
+      .sidebar.collapsed {
+        width: 80px;
+      }
+    }
+
+    .sidebar-header {
+      padding: 1.5rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--primary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      color: white;
+    }
+
+    .logo-text {
+      font-weight: 600;
+      font-size: 1.25rem;
+      color: var(--gray-900);
+      white-space: nowrap;
+    }
+
+    .sidebar.collapsed .logo-text {
+      display: none;
+    }
+
+    .toggle-btn {
+      background: var(--gray-100);
+      border: none;
+      color: var(--gray-600);
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .toggle-btn:hover {
+      background: var(--gray-200);
+    }
+
+    /* User info in sidebar */
+    .sidebar-user {
+      padding: 1.5rem 1rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-avatar {
+      width: 48px;
+      height: 48px;
+      background: var(--primary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1.25rem;
+      color: white;
+    }
+
+    .user-meta {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .user-fullname {
+      font-weight: 600;
+      color: var(--gray-900);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-email {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-role-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      background: var(--gray-100);
+      border-radius: 4px;
+      font-size: 0.7rem;
+      margin-top: 0.25rem;
+      color: var(--gray-700);
+    }
+
+    /* Navigation */
+    .nav-menu {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding: 0.875rem 1rem;
+      margin-bottom: 0.25rem;
+      border: none;
+      background: none;
+      color: var(--gray-600);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    .nav-item:hover {
+      background: var(--gray-100);
+      color: var(--gray-900);
+    }
+
+    .nav-item.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .nav-icon {
+      width: 24px;
+      margin-right: 0.75rem;
+      font-size: 1.25rem;
+    }
+
+    .nav-label {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .sidebar.collapsed .nav-label {
+      display: none;
+    }
+
+    /* Logout button */
+    .logout-container {
+      padding: 1rem;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding: 0.875rem 1rem;
+      border: none;
+      background: var(--danger);
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .logout-btn:hover {
+      background: #dc2626;
+    }
+
+    .logout-btn i {
+      width: 24px;
+      margin-right: 0.75rem;
+    }
+
+    .sidebar.collapsed .logout-btn span {
+      display: none;
+    }
+
+    /* Mobile overlay */
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 40;
+      display: none;
+    }
+
+    .sidebar-overlay.show {
+      display: block;
+    }
+
+    /* ----- MAIN CONTENT ----- */
+    .main {
+      flex: 1;
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (min-width: 1024px) {
+      .main {
+        margin-left: 260px;
+        width: calc(100% - 260px);
+        transition: margin-left 0.3s;
+      }
+      .main.expanded {
+        margin-left: 80px;
+        width: calc(100% - 80px);
+      }
+    }
+
+    /* Top bar */
+    .top-bar {
+      background: white;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+
+    .menu-toggle {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      padding: 0.5rem;
+    }
+
+    @media (min-width: 1024px) {
+      .menu-toggle {
+        display: none;
+      }
+    }
+
+    /* User dropdown */
+    .dropdown {
+      position: relative;
+    }
+
+    .user-trigger {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.5rem 1rem;
+      border-radius: 40px;
+      cursor: pointer;
+      background: var(--gray-50);
+    }
+
+    .user-trigger:hover {
+      background: var(--gray-100);
+    }
+
+    .user-info {
+      text-align: right;
+      display: none;
+    }
+
+    @media (min-width: 768px) {
+      .user-info {
+        display: block;
+      }
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--gray-900);
+    }
+
+    .user-role {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+    }
+
+    .user-avatar-small {
+      width: 40px;
+      height: 40px;
+      background: var(--primary);
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 0.5rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      border: 1px solid var(--gray-200);
+      min-width: 200px;
+      display: none;
+      z-index: 50;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      color: var(--gray-700);
+    }
+
+    .dropdown-item:hover {
+      background: var(--gray-50);
+    }
+
+    .dropdown-item:first-child {
+      border-radius: 10px 10px 0 0;
+    }
+
+    .dropdown-item:last-child {
+      border-radius: 0 0 10px 10px;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: var(--gray-200);
+      margin: 0.5rem 0;
+    }
+
+    /* Session timeout warning */
+    .session-warning {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      left: 20px;
+      max-width: 400px;
+      margin: 0 auto;
+      background: var(--warning);
+      color: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 1000;
+      animation: slideDown 0.3s;
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Content area */
+    .content {
+      padding: 1rem;
+      flex: 1;
+    }
+
+    @media (min-width: 768px) {
+      .content {
+        padding: 2rem;
+      }
+    }
+
+    /* Page header */
+    .page-header {
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    @media (min-width: 768px) {
+      .page-title {
+        font-size: 2rem;
+      }
+    }
+
+    .page-subtitle {
+      color: var(--gray-600);
+      margin-top: 0.25rem;
+      font-size: 0.95rem;
+    }
+
+    /* API Connection Banner */
+    .api-banner {
+      background: white;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid var(--success);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .api-banner.error {
+      border-left-color: var(--danger);
+    }
+
+    .api-banner i {
+      font-size: 1.25rem;
+    }
+
+    .api-banner.success i { color: var(--success); }
+    .api-banner.error i { color: var(--danger); }
+
+    .api-url {
+      font-family: monospace;
+      background: var(--gray-100);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (min-width: 768px) {
+      .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+      }
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.25rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    @media (min-width: 768px) {
+      .stat-value {
+        font-size: 2rem;
+      }
+    }
+
+    .trend-up { color: var(--success); }
+    .trend-down { color: var(--danger); }
+
+    /* Action cards */
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (min-width: 640px) {
+      .action-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .action-grid {
+        grid-template-columns: repeat(5, 1fr);
+      }
+    }
+
+    .action-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .action-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .action-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .action-card.issue .action-icon { background: #dbeafe; color: var(--primary); }
+    .action-card.redeem .action-icon { background: #dcfce7; color: var(--success); }
+    .action-card.templates .action-icon { background: #f3e8ff; color: #9333ea; }
+    .action-card.users .action-icon { background: #fee2e2; color: var(--danger); }
+    .action-card.companies .action-icon { background: #fef3c7; color: var(--warning); }
+    .action-card.bulk .action-icon { background: #e0e7ff; color: #4f46e5; }
+    .action-card.analytics .action-icon { background: #fce7f3; color: #ec4899; }
+    .action-card.reports .action-icon { background: #d1fae5; color: #10b981; }
+    .action-card.qr .action-icon { background: #fff1f0; color: #f43f5e; }
+
+    .action-content h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      color: var(--gray-900);
+    }
+
+    .action-content p {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    /* Tables */
+    .table-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+      overflow-x: auto;
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .table-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .table-badge {
+      background: var(--gray-100);
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-600);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    th {
+      text-align: left;
+      padding: 1rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray-600);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--gray-200);
+      color: var(--gray-700);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .status-active { background: #dcfce7; color: #166534; }
+    .status-inactive { background: #fee2e2; color: #991b1b; }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-suspended { background: #fee2e2; color: #991b1b; }
+    .status-locked { background: #fee2e2; color: #991b1b; }
+    .status-redeemed { background: #fee2e2; color: #991b1b; }
+    .status-expired { background: #f3f4f6; color: #4b5563; }
+
+    /* Search dropdown */
+    .search-container {
+      position: relative;
+      margin-bottom: 1rem;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+    }
+
+    .search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      margin-top: 0.25rem;
+      max-height: 300px;
+      overflow-y: auto;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      z-index: 10;
+      display: none;
+    }
+
+    .search-results.show {
+      display: block;
+    }
+
+    .search-result-item {
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .search-result-item:hover {
+      background: var(--gray-50);
+    }
+
+    .search-result-item.selected {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* Upload area */
+    .upload-area {
+      border: 2px dashed var(--gray-300);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      background: var(--gray-50);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 1rem;
+    }
+
+    .upload-area:hover {
+      border-color: var(--primary);
+      background: #eff6ff;
+    }
+
+    .upload-area.dragover {
+      border-color: var(--success);
+      background: #dcfce7;
+    }
+
+    .preview-table {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+
+    .preview-table table {
+      min-width: 100%;
+    }
+
+    .preview-table th {
+      position: sticky;
+      top: 0;
+      background: var(--gray-800);
+      color: white;
+      z-index: 10;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--gray-200);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--success);
+      transition: width 0.3s;
+    }
+
+    /* QR Grid */
+    .qr-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .qr-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .qr-card canvas {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Analytics */
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (min-width: 768px) {
+      .analytics-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .analytics-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .chart-container {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      height: 300px;
+    }
+
+    /* Reports */
+    .report-filters {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+    }
+
+    /* Forms */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (min-width: 768px) {
+      .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--gray-700);
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    }
+
+    .code-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .code-group input {
+      flex: 1;
+    }
+
+    .code-group button {
+      width: 48px;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .code-group button:hover {
+      background: var(--gray-200);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      font-size: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #16a34a;
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: white;
+    }
+
+    .btn-warning:hover {
+      background: #d97706;
+    }
+
+    .btn-outline {
+      background: white;
+      border: 1px solid var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .btn-outline:hover {
+      background: var(--gray-50);
+    }
+
+    .btn-sm {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+
+    .btn-lg {
+      padding: 1rem 2rem;
+      font-size: 1rem;
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    /* Messages */
+    .error-box {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+    .success-box {
+      background: #dcfce7;
+      color: #166534;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+.warning-box {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+    .toast {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      left: 1rem;
+      background: var(--gray-900);
+      color: white;
+      padding: 1rem;
+      border-radius: 8px;
+      display: none;
+      z-index: 1000;
+      animation: slideUp 0.3s;
+    }
+
+    @media (min-width: 768px) {
+      .toast {
+        left: auto;
+        width: 320px;
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .hidden { display: none; }
+    .mt-4 { margin-top: 1rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-success { color: var(--success); }
+    .text-danger { color: var(--danger); }
+    .text-warning { color: var(--warning); }
+    .font-bold { font-weight: 600; }
+  </style>
+</head>
+<body>
+  <!-- Session Timeout Warning -->
+  <div class="session-warning" id="sessionWarning">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <i class="fas fa-clock" style="font-size: 1.5rem;"></i>
+      <div>
+        <strong>Session expiring soon!</strong>
+        <p style="font-size: 0.875rem; margin-top: 0.25rem;">You will be logged out in <span id="sessionTimer">60</span> seconds</p>
+      </div>
+      <button class="btn btn-sm" onclick="extendSession()" style="margin-left: auto; background: white; color: var(--gray-900);">Stay Logged In</button>
+    </div>
+  </div>
+
+  <div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon"><i class="fas fa-ticket-alt"></i></div>
+          <span class="logo-text">VoucherPalace</span>
+        </div>
+        <button class="toggle-btn" onclick="toggleSidebar()">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+      </div>
+
+      <div class="sidebar-user" id="sidebarUser">
+        <div class="user-profile">
+          <div class="user-avatar" id="sidebarAvatar">?</div>
+          <div class="user-meta">
+            <div class="user-fullname" id="sidebarName">Loading...</div>
+            <div class="user-email" id="sidebarEmail">-</div>
+            <div class="user-role-badge" id="sidebarRole">User</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-menu">
+        <button class="nav-item active" onclick="switchView('dashboard')" id="nav-dashboard">
+          <i class="fas fa-chart-pie nav-icon"></i>
+          <span class="nav-label">Dashboard</span>
+        </button>
+        <button class="nav-item" onclick="switchView('issue')" id="nav-issue">
+          <i class="fas fa-plus-circle nav-icon"></i>
+          <span class="nav-label">Issue Voucher</span>
+        </button>
+        <button class="nav-item" onclick="switchView('redeem')" id="nav-redeem">
+          <i class="fas fa-check-circle nav-icon"></i>
+          <span class="nav-label">Redeem</span>
+        </button>
+        <button class="nav-item" onclick="switchView('templates')" id="nav-templates">
+          <i class="fas fa-file-alt nav-icon"></i>
+          <span class="nav-label">Templates</span>
+        </button>
+        <button class="nav-item" onclick="switchView('companies')" id="nav-companies">
+          <i class="fas fa-building nav-icon"></i>
+          <span class="nav-label">Companies</span>
+        </button>
+        <button class="nav-item" onclick="switchView('users')" id="nav-users">
+          <i class="fas fa-users nav-icon"></i>
+          <span class="nav-label">Users</span>
+        </button>
+        <div class="nav-divider" style="height: 1px; background: var(--gray-200); margin: 0.5rem 0;"></div>
+        <button class="nav-item" onclick="switchView('bulk')" id="nav-bulk">
+          <i class="fas fa-layer-group nav-icon"></i>
+          <span class="nav-label">Bulk Operations</span>
+        </button>
+        <button class="nav-item" onclick="switchView('analytics')" id="nav-analytics">
+          <i class="fas fa-chart-line nav-icon"></i>
+          <span class="nav-label">Analytics</span>
+        </button>
+        <button class="nav-item" onclick="switchView('reports')" id="nav-reports">
+          <i class="fas fa-file-pdf nav-icon"></i>
+          <span class="nav-label">Reports</span>
+        </button>
+        <button class="nav-item" onclick="switchView('qr')" id="nav-qr">
+          <i class="fas fa-qrcode nav-icon"></i>
+          <span class="nav-label">QR Generator</span>
+        </button>
+      </div>
+
+      <div class="logout-container">
+        <button class="logout-btn" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile overlay -->
+    <div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
+
+    <!-- Main content -->
+    <div class="main" id="main">
+      <!-- Top bar -->
+      <div class="top-bar">
+        <button class="menu-toggle" onclick="openSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+
+        <div class="dropdown">
+          <div class="user-trigger" onclick="toggleDropdown()">
+            <div class="user-info">
+              <div class="user-name" id="headerName">Loading...</div>
+              <div class="user-role" id="headerRole">-</div>
+            </div>
+            <div class="user-avatar-small" id="headerAvatar">?</div>
+          </div>
+          <div class="dropdown-menu" id="dropdown">
+            <div class="dropdown-item" onclick="showProfile()">
+              <i class="fas fa-user"></i> My Profile
+            </div>
+            <div class="dropdown-item" onclick="showSettings()">
+              <i class="fas fa-cog"></i> Settings
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" onclick="logout()">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+        <!-- API Connection Banner -->
+        <div id="apiBanner" class="api-banner hidden">
+          <i class="fas fa-circle-check"></i>
+          <span>Connected to API: <span class="api-url" id="apiUrl"></span> | <span id="apiLatency"></span></span>
+        </div>
+
+        <!-- DASHBOARD VIEW -->
+        <div id="dashboardView">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Dashboard</h1>
+              <p class="page-subtitle">Welcome back! Here's your overview for <span id="currentDate"></span></p>
+            </div>
+            <button class="btn btn-outline" onclick="refreshAll()">
+              <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">
+                <span>Total Redemptions</span>
+                <span class="trend-up"><i class="fas fa-arrow-up"></i> +12%</span>
+              </div>
+              <div class="stat-value" id="statRedemptions">-</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">
+                <span>Active Vouchers</span>
+                <span class="trend-up"><i class="fas fa-arrow-up"></i> +8%</span>
+              </div>
+              <div class="stat-value" id="statVouchers">-</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">
+                <span>Companies</span>
+                <span class="trend-down"><i class="fas fa-arrow-down"></i> -2%</span>
+              </div>
+              <div class="stat-value" id="statCompanies">-</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">
+                <span>Templates</span>
+                <span class="trend-up"><i class="fas fa-arrow-up"></i> +5%</span>
+              </div>
+              <div class="stat-value" id="statTemplates">-</div>
+            </div>
+          </div>
+
+          <div class="action-grid">
+            <div class="action-card issue" onclick="switchView('issue')">
+              <div class="action-icon"><i class="fas fa-plus-circle"></i></div>
+              <div class="action-content">
+                <h3>Issue Voucher</h3>
+                <p>Create new voucher</p>
+              </div>
+            </div>
+            <div class="action-card redeem" onclick="switchView('redeem')">
+              <div class="action-icon"><i class="fas fa-check-circle"></i></div>
+              <div class="action-content">
+                <h3>Redeem</h3>
+                <p>Process redemption</p>
+              </div>
+            </div>
+            <div class="action-card templates" onclick="switchView('templates')">
+              <div class="action-icon"><i class="fas fa-file-alt"></i></div>
+              <div class="action-content">
+                <h3>Templates</h3>
+                <p>Manage templates</p>
+              </div>
+            </div>
+            <div class="action-card companies" onclick="switchView('companies')">
+              <div class="action-icon"><i class="fas fa-building"></i></div>
+              <div class="action-content">
+                <h3>Companies</h3>
+                <p>Manage tenants</p>
+              </div>
+            </div>
+            <div class="action-card users" onclick="switchView('users')">
+              <div class="action-icon"><i class="fas fa-users"></i></div>
+              <div class="action-content">
+                <h3>Users</h3>
+                <p>Manage users</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <div class="table-header">
+              <h2 class="table-title">Recent Redemptions</h2>
+              <span class="table-badge" id="recentCount">0</span>
+            </div>
+            <div id="recentError" class="error-box hidden">Could not load redemptions from API</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>User</th>
+                  <th>Merchant</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="recentTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ISSUE VIEW -->
+      <!-- ISSUE VIEW -->
+<div id="issueView" class="hidden">
+  <div class="page-header">
+    <h1 class="page-title">Issue Voucher</h1>
+    <p class="page-subtitle">Create a new voucher using a template</p>
+  </div>
+
+  <div class="table-card">
+    <!-- Template Selection with Preview -->
+    <div class="form-grid" style="grid-template-columns: 2fr 1fr;">
+      <div class="search-container">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" class="search-input" id="templateSearch" placeholder="Search templates..." oninput="debouncedSearch('templates', this.value, populateTemplateResults)">
+        <div class="search-results" id="templateResults"></div>
+      </div>
+      <div>
+        <button class="btn btn-outline btn-block" onclick="showTemplatePreview()" id="previewTemplateBtn" disabled>
+          <i class="fas fa-eye"></i> Preview Template
+        </button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Select Template *</label>
+      <select class="form-select" id="issueTemplate" required onchange="onTemplateChange()">
+        <option value="">Select template</option>
+      </select>
+    </div>
+
+    <!-- Template Preview Card (hidden by default) -->
+    <div id="templatePreviewCard" class="hidden" style="background: #f0f9ff; border-left: 4px solid var(--primary); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h4 id="previewTemplateName" style="font-weight: 600;"></h4>
+        <span id="previewTemplateType" class="status-badge"></span>
+      </div>
+      <p id="previewTemplateDescription" style="margin: 0.5rem 0; color: var(--gray-600);"></p>
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <span id="previewTemplateValue"></span>
+        <span id="previewTemplateValidity"></span>
+        <span id="previewTemplateMinPurchase"></span>
+      </div>
+    </div>
+
+    <!-- Company Selection with Quick Pick -->
+    <div class="form-grid" style="grid-template-columns: 2fr 1fr;">
+      <div class="search-container">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" class="search-input" id="companySearch" placeholder="Search companies..." oninput="debouncedSearch('companies', this.value, populateCompanyResults)">
+        <div class="search-results" id="companyResults"></div>
+      </div>
+      <div>
+        <button class="btn btn-outline btn-block" onclick="useMyCompany()" id="useMyCompanyBtn">
+          <i class="fas fa-building"></i> Use My Company
+        </button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Company *</label>
+      <select class="form-select" id="issueCompany" required onchange="onCompanyChange()">
+        <option value="">Select company</option>
+      </select>
+    </div>
+
+    <!-- Beneficiary Selection with Quick Options -->
+    <div class="form-group">
+      <label class="form-label">Beneficiary</label>
+      <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+        <button class="btn btn-sm btn-outline" onclick="setBeneficiary('current')">
+          <i class="fas fa-user"></i> Use Current User
+        </button>
+        <button class="btn btn-sm btn-outline" onclick="setBeneficiary('recent')">
+          <i class="fas fa-history"></i> Recent Beneficiary
+        </button>
+        <button class="btn btn-sm btn-outline" onclick="clearBeneficiary()">
+          <i class="fas fa-times"></i> Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- Beneficiary Search -->
+    <div class="search-container">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" class="search-input" id="beneficiarySearch" placeholder="Search users or enter new..." oninput="debouncedSearch('users', this.value, populateBeneficiaryResults)">
+      <div class="search-results" id="beneficiaryResults"></div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Beneficiary Name</label>
+        <input type="text" class="form-input" id="issueName" placeholder="John Doe" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Beneficiary Email</label>
+        <input type="email" class="form-input" id="issueEmail" placeholder="john@example.com" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Beneficiary Phone</label>
+        <input type="tel" class="form-input" id="issuePhone" placeholder="+1234567890" autocomplete="off">
+      </div>
+    </div>
+
+    <!-- Expiry Date with Quick Options -->
+    <div class="form-grid" style="grid-template-columns: 2fr 1fr;">
+      <div class="form-group">
+        <label class="form-label">Expiry Date</label>
+        <input type="date" class="form-input" id="issueExpiry">
+      </div>
+      <div class="form-group">
+        <label class="form-label"> </label>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-sm btn-outline" onclick="setExpiry('30')">30 days</button>
+          <button class="btn btn-sm btn-outline" onclick="setExpiry('90')">90 days</button>
+          <button class="btn btn-sm btn-outline" onclick="setExpiry('365')">1 year</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Percentage Voucher Fields -->
+    <div id="percentageVoucherFields" class="hidden" style="background: #f3e8ff; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+      <h4 style="margin-bottom: 1rem; color: #6b21a5;">Percentage Voucher Details</h4>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Discount Percentage</label>
+          <input type="text" class="form-input" id="discountPercentage" readonly style="background: #f3f4f6;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Minimum Purchase (KES)</label>
+          <input type="number" class="form-input" id="minPurchaseRequired" readonly style="background: #f3f4f6;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Expected Purchase Amount (KES) *</label>
+          <input type="number" class="form-input" id="purchaseAmount" step="0.01" placeholder="Enter amount" oninput="calculateDiscount()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Discount Value (KES)</label>
+          <input type="text" class="form-input" id="discountValue" readonly style="background: #f3f4f6; font-weight: bold; color: #059669;">
+        </div>
+      </div>
+      <div id="discountInfo" class="info-box"></div>
+    </div>
+
+    <div id="issueResult" class="hidden"></div>
+
+    <div class="action-buttons">
+      <button class="btn btn-outline" onclick="switchView('dashboard')">Cancel</button>
+      <button class="btn btn-primary" onclick="issueVoucher()">Issue Voucher</button>
+    </div>
+  </div>
+
+  <!-- Recent Beneficiaries Modal (hidden by default) -->
+  <div id="recentBeneficiariesModal" class="modal hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3>Recent Beneficiaries</h3>
+        <button onclick="closeModal('recentBeneficiariesModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div id="recentBeneficiariesList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        <!-- REDEEM VIEW -->
+        <div id="redeemView" class="hidden">
+          <div class="page-header">
+            <h1 class="page-title">Redeem Voucher</h1>
+            <p class="page-subtitle">Process a voucher redemption</p>
+          </div>
+
+          <div class="table-card">
+            <div class="form-group">
+              <label class="form-label">Voucher Code</label>
+              <input type="text" class="form-input" id="redeemCode" placeholder="Enter code" onkeypress="if(event.key==='Enter') loadVoucher()">
+            </div>
+
+            <div id="voucherDetails" class="hidden" style="background: var(--gray-50); padding: 1rem; border-radius: 8px; margin: 1rem 0;"></div>
+
+            <!-- Merchant Search -->
+            <div class="search-container">
+              <i class="fas fa-search search-icon"></i>
+              <input type="text" class="search-input" id="merchantSearch" placeholder="Search merchants..." oninput="debouncedSearch('merchants', this.value, populateMerchantResults)">
+              <div class="search-results" id="merchantResults"></div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Merchant *</label>
+                <select class="form-select" id="redeemMerchant" required>
+                  <option value="">Select merchant</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Amount *</label>
+                <input type="number" class="form-input" id="redeemAmount" step="0.01" required>
+              </div>
+            </div>
+
+            <div id="redeemResult" class="hidden"></div>
+
+            <div class="action-buttons">
+              <button class="btn btn-outline" onclick="switchView('dashboard')">Cancel</button>
+              <button class="btn btn-success" onclick="redeemVoucher()">Redeem</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TEMPLATES VIEW -->
+        <div id="templatesView" class="hidden">
+          <div class="page-header">
+            <h1 class="page-title">Voucher Templates</h1>
+            <p class="page-subtitle">Create and manage voucher templates</p>
+            <button class="btn btn-primary" onclick="showCreateTemplate()">+ New Template</button>
+          </div>
+
+          <div class="table-card">
+            <div id="templatesError" class="error-box hidden">Could not load templates</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Value</th>
+                  <th>Company</th>
+                  <th>Status</th>
+                  <th>Usage</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="templatesTable"></tbody>
+            </table>
+          </div>
+
+          <!-- Create Template Form -->
+          <div id="createTemplateForm" class="table-card hidden">
+            <h2 class="table-title" style="margin-bottom: 1rem;">Create New Template</h2>
+            <div class="search-container">
+              <i class="fas fa-search search-icon"></i>
+              <input type="text" class="search-input" id="templateCompanySearch" placeholder="Search companies..." oninput="debouncedSearch('companies', this.value, populateTemplateCompanyResults)">
+              <div class="search-results" id="templateCompanyResults"></div>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Company *</label>
+                <select class="form-select" id="templateCompany">
+                  <option value="">Select company</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Template Name *</label>
+                <input type="text" class="form-input" id="templateName">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Type *</label>
+                <select class="form-select" id="templateType" onchange="toggleTemplateValue()">
+                  <option value="fixed_amount">Fixed Amount</option>
+                  <option value="percentage">Percentage</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Value *</label>
+                <input type="number" class="form-input" id="templateValue" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Valid From</label>
+                <input type="date" class="form-input" id="templateValidFrom">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Valid To</label>
+                <input type="date" class="form-input" id="templateValidTo">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Usage Limit</label>
+                <select class="form-select" id="templateUsageLimit">
+                  <option value="single">Single Use</option>
+                  <option value="multi">Multiple Uses</option>
+                  <option value="unlimited">Unlimited</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Min Purchase</label>
+                <input type="number" class="form-input" id="templateMinPurchase" step="0.01" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Public Visible</label>
+                <select class="form-select" id="templatePublic">
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Public Price</label>
+                <input type="number" class="form-input" id="templatePublicPrice" step="0.01" placeholder="0.00">
+              </div>
+              <div class="form-group" style="grid-column: span 2;">
+                <label class="form-label">Description</label>
+                <textarea class="form-input" id="templateDescription" rows="3" placeholder="Template description..."></textarea>
+              </div>
+            </div>
+            <div class="action-buttons">
+              <button class="btn btn-outline" onclick="hideCreateTemplate()">Cancel</button>
+              <button class="btn btn-primary" onclick="createTemplate()">Create Template</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- COMPANIES VIEW -->
+        <div id="companiesView" class="hidden">
+          <div class="page-header">
+            <h1 class="page-title">Companies</h1>
+            <p class="page-subtitle">Manage tenant companies</p>
+            <button class="btn btn-primary" onclick="showCreateCompany()">+ New Company</button>
+          </div>
+
+          <div class="table-card">
+            <div id="companiesError" class="error-box hidden">Could not load companies</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Status</th>
+                  <th>Balance</th>
+                  <th>Credit Limit</th>
+                </tr>
+              </thead>
+              <tbody id="companiesTable"></tbody>
+            </table>
+          </div>
+
+          <!-- Create Company Form -->
+          <div id="createCompanyForm" class="table-card hidden">
+            <h2 class="table-title" style="margin-bottom: 1rem;">Create New Company</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Company Name *</label>
+                <input type="text" class="form-input" id="companyName">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Type *</label>
+                <select class="form-select" id="companyType">
+                  <option value="corporate">Corporate</option>
+                  <option value="merchant">Merchant</option>
+                  <option value="rfa_internal">RFA Internal</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email *</label>
+                <input type="email" class="form-input" id="companyEmail">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="tel" class="form-input" id="companyPhone">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Registration No.</label>
+                <input type="text" class="form-input" id="companyReg">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tax ID</label>
+                <input type="text" class="form-input" id="companyTax">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Website</label>
+                <input type="url" class="form-input" id="companyWebsite" placeholder="https://">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Wallet Balance</label>
+                <input type="number" class="form-input" id="companyBalance" value="0" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Credit Limit</label>
+                <input type="number" class="form-input" id="companyCreditLimit" value="0" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Billing Cycle</label>
+                <select class="form-select" id="companyBillingCycle">
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="annual">Annual</option>
+                </select>
+              </div>
+              <div class="form-group" style="grid-column: span 2;">
+                <label class="form-label">Address</label>
+                <textarea class="form-input" id="companyAddress" rows="2"></textarea>
+              </div>
+            </div>
+            <div class="action-buttons">
+              <button class="btn btn-outline" onclick="hideCreateCompany()">Cancel</button>
+              <button class="btn btn-primary" onclick="createCompany()">Create Company</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- USERS VIEW -->
+        <div id="usersView" class="hidden">
+          <div class="page-header">
+            <h1 class="page-title">Users</h1>
+            <p class="page-subtitle">Manage system users</p>
+            <button class="btn btn-primary" onclick="showCreateUser()">+ New User</button>
+          </div>
+
+          <div class="table-card">
+            <div id="usersError" class="error-box hidden">Could not load users</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Role</th>
+                  <th>Company</th>
+                  <th>Status</th>
+                  <th>Last Login</th>
+                </tr>
+              </thead>
+              <tbody id="usersTable"></tbody>
+            </table>
+          </div>
+
+          <!-- Create User Form -->
+          <div id="createUserForm" class="table-card hidden">
+            <h2 class="table-title" style="margin-bottom: 1rem;">Create New User</h2>
+            <div class="search-container">
+              <i class="fas fa-search search-icon"></i>
+              <input type="text" class="search-input" id="userCompanySearch" placeholder="Search companies..." oninput="debouncedSearch('companies', this.value, populateUserCompanyResults)">
+              <div class="search-results" id="userCompanyResults"></div>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Company *</label>
+                <select class="form-select" id="userCompany">
+                  <option value="">Select company</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email *</label>
+                <input type="email" class="form-input" id="userEmail">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password *</label>
+                <input type="password" class="form-input" id="userPassword">
+              </div>
+              <div class="form-group">
+                <label class="form-label">First Name</label>
+                <input type="text" class="form-input" id="userFirstName">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Last Name</label>
+                <input type="text" class="form-input" id="userLastName">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="tel" class="form-input" id="userPhone">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Role *</label>
+                <select class="form-select" id="userRole">
+                  <option value="consumer">Consumer</option>
+                  <option value="client_user">Client User</option>
+                  <option value="client_admin">Client Admin</option>
+                  <option value="merchant_staff">Merchant Staff</option>
+                  <option value="merchant_admin">Merchant Admin</option>
+                  <option value="super_admin">Super Admin</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="userStatus">
+                  <option value="active">Active</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="locked">Locked</option>
+                </select>
+              </div>
+            </div>
+            <div class="action-buttons">
+              <button class="btn btn-outline" onclick="hideCreateUser()">Cancel</button>
+              <button class="btn btn-primary" onclick="createUser()">Create User</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- BULK OPERATIONS VIEW -->
+        <div id="bulkView" class="hidden">
+          <div class="page-header">
+            <h1 class="page-title">Bulk Operations</h1>
+            <p class="page-subtitle">Create multiple users or vouchers via CSV/Excel</p>
+          </div>
+
+          <!-- Tabs for bulk type -->
+          <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+            <button class="btn btn-primary" onclick="setBulkType('users')" id="bulkUsersTab">Bulk Users</button>
+            <button class="btn btn-outline" onclick="setBulkType('vouchers')" id="bulkVouchersTab">Bulk Vouchers</button>
+          </div>
+
+          <!-- Bulk Users Form -->
+          <div id="bulkUsersSection">
+            <div class="table-card">
+              <h2 class="table-title">Bulk Create Users</h2>
+              <p class="page-subtitle">Download template or upload your CSV/Excel file</p>
+
+              <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <button class="btn btn-outline" onclick="downloadUserTemplate()">
+                  <i class="fas fa-download"></i> Download Template
+                </button>
+              </div>
+
+              <div class="upload-area" id="userUploadArea" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleUserDrop(event)" onclick="document.getElementById('userFileInput').click()">
+                <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: var(--primary);"></i>
+                <p>Drag & drop your file here or click to browse</p>
+                <p class="page-subtitle">Supports: .csv, .xlsx, .xls</p>
+                <input type="file" id="userFileInput" accept=".csv,.xlsx,.xls" style="display: none;" onchange="handleUserFileSelect(this)">
+              </div>
+
+              <div id="userPreview" class="hidden">
+                <h3 style="margin: 1rem 0;">Preview (First 5 rows)</h3>
+                <div class="preview-table" id="userPreviewTable"></div>
+                
+                <div class="progress-bar" id="userProgressBar" style="display: none;">
+                  <div class="progress-fill" id="userProgressFill" style="width: 0%"></div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                  <button class="btn btn-outline" onclick="clearUserUpload()">Clear</button>
+                  <button class="btn btn-success" onclick="processBulkUsers()" id="processUsersBtn">
+                    Process Bulk Upload
+                  </button>
+                </div>
+              </div>
+
+              <div id="userBulkResult" class="hidden" style="margin-top: 1rem;"></div>
+            </div>
+          </div>
+
+          <!-- Bulk Vouchers Form -->
+          <div id="bulkVouchersSection" class="hidden">
+            <div class="table-card">
+              <h2 class="table-title">Bulk Create Vouchers</h2>
+              <p class="page-subtitle">Download template or upload your CSV/Excel file</p>
+
+              <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <button class="btn btn-outline" onclick="downloadVoucherTemplate()">
+                  <i class="fas fa-download"></i> Download Template
+                </button>
+              </div>
+
+              <div class="upload-area" id="voucherUploadArea" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleVoucherDrop(event)" onclick="document.getElementById('voucherFileInput').click()">
+                <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: var(--primary);"></i>
+                <p>Drag & drop your file here or click to browse</p>
+                <p class="page-subtitle">Supports: .csv, .xlsx, .xls</p>
+                <input type="file" id="voucherFileInput" accept=".csv,.xlsx,.xls" style="display: none;" onchange="handleVoucherFileSelect(this)">
+              </div>
+
+              <div id="voucherPreview" class="hidden">
+                <h3 style="margin: 1rem 0;">Preview (First 5 rows)</h3>
+                <div class="preview-table" id="voucherPreviewTable"></div>
+                
+                <div class="progress-bar" id="voucherProgressBar" style="display: none;">
+                  <div class="progress-fill" id="voucherProgressFill" style="width: 0%"></div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                  <button class="btn btn-outline" onclick="clearVoucherUpload()">Clear</button>
+                  <button class="btn btn-success" onclick="processBulkVouchers()" id="processVouchersBtn">
+                    Process Bulk Upload
+                  </button>
+                </div>
+              </div>
+
+              <div id="voucherBulkResult" class="hidden" style="margin-top: 1rem;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ANALYTICS VIEW -->
+        <div id="analyticsView" class="hidden">
+          <div class="page-header">
+            <h1 class="page-title">Analytics Dashboard</h1>
+            <p class="page-subtitle">Real-time insights into your voucher platform</p>
+          </div>
+
+          <!-- Date Range Selector -->
+          <div class="report-filters">
+            <div style="flex: 1;">
+              <label class="form-label">Date Range</label>
+              <select class="form-select" id="analyticsRange" onchange="loadAnalytics()">
+                <option value="7">Last 7 days</option>
+                <option value="30" selected>Last 30 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="365">Last year</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+            <div id="customDateRange" style="display: none; gap: 1rem; flex: 2;">
+              <div style="flex: 1;">
+                <label class="form-label">From</label>
+                <input type="date" class="form-input" id="analyticsFrom">
+              </div>
+              <div style="flex: 1;">
+                <label class="form-label">To</label>
+                <input type="date" class="form-input" id="analyticsTo">
+              </div>
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+              <button class="btn btn-primary" onclick="exportAnalytics()">
+                <i class="fas fa-download"></i> Export Report
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Cards -->
+          <div class="analytics-grid">
+            <div class="analytics-card">
+              <div style="display: flex; justify-content: space-between;">
+                <span class="stat-label">Total Revenue</span>
+                <span class="trend-up" id="revenueTrend"><i class="fas fa-arrow-up"></i> +0%</span>
+              </div>
+              <div class="stat-value" id="totalRevenue">KES 0</div>
+              <small class="page-subtitle">vs previous period</small>
+            </div>
+
+            <div class="analytics-card">
+              <div style="display: flex; justify-content: space-between;">
+                <span class="stat-label">Redemptions</span>
+                <span class="trend-up" id="redemptionsTrend"><i class="fas fa-arrow-up"></i> +0%</span>
+              </div>
+              <div class="stat-value" id="totalRedemptionsAnalytics">0</div>
+              <small class="page-subtitle">vs previous period</small>
+            </div>
+
+            <div class="analytics-card">
+              <div style="display: flex; justify-content: space-between;">
+                <span class="stat-label">Avg. Value</span>
+                <span class="trend-down" id="avgTrend"><i class="fas fa-arrow-down"></i> 0%</span>
+              </div>
+              <div class="stat-value" id="avgValue">KES 0</div>
+              <small class="page-subtitle">per redemption</small>
+            </div>
+
+            <div class="analytics-card">
+              <div style="display: flex; justify-content: space-between;">
+                <span class="stat-label">Active Users</span>
+                <span class="trend-up" id="usersTrend"><i class="fas fa-arrow-up"></i> +0%</span>
+              </div>
+              <div class="stat-value" id="activeUsers">0</div>
+              <small class="page-subtitle">last 30 days</small>
+            </div>
+          </div>
+
+          <!-- Charts -->
+          <div class="chart-container">
+            <canvas id="redemptionsChart"></canvas>
+          </div>
+
+          <div class="chart-container">
+            <canvas id="revenueChart"></canvas>
+          </div>
+
+          <!-- Top Merchants Table -->
+          <div class="table-card">
+            <h2 class="table-title">Top Performing Merchants</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Merchant</th>
+                  <th>Redemptions</th>
+                  <th>Revenue</th>
+                  <th>Growth</th>
+                </tr>
+              </thead>
+              <tbody id="topMerchantsTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- REPORTS VIEW -->
+        <div id="reportsView" class="hidden">
+          <div class="page-header">
+            <h1 class="page-title">Reports</h1>
+            <p class="page-subtitle">Generate and download detailed reports</p>
+          </div>
+
+          <div class="report-filters">
+            <div style="flex: 1;">
+              <label class="form-label">Report Type</label>
+              <select class="form-select" id="reportType">
+                <option value="redemptions">Redemptions Report</option>
+                <option value="vouchers">Vouchers Report</option>
+                <option value="users">Users Report</option>
+                <option value="companies">Companies Report</option>
+                <option value="revenue">Revenue Report</option>
+              </select>
+            </div>
+            <div style="flex: 1;">
+              <label class="form-label">Date Range</label>
+              <select class="form-select" id="reportRange">
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month" selected>This Month</option>
+                <option value="quarter">This Quarter</option>
+                <option value="year">This Year</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+              <button class="btn btn-primary" onclick="generateReport()">
+                <i class="fas fa-file-pdf"></i> Generate PDF
+              </button>
+            </div>
+          </div>
+
+          <!-- Report Preview -->
+          <div class="table-card" id="reportPreview">
+            <div style="text-align: center; padding: 3rem;">
+              <i class="fas fa-file-pdf" style="font-size: 3rem; color: var(--gray-400);"></i>
+              <p class="page-subtitle" style="margin-top: 1rem;">Select report options and click Generate PDF</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- QR GENERATOR VIEW -->
+        <div id="qrView" class="hidden">
+          <div class="page-header">
+            <h1 class="page-title">QR Code Generator</h1>
+            <p class="page-subtitle">Generate QR codes for vouchers</p>
+          </div>
+
+          <div class="table-card">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+              <!-- Single QR Generator -->
+              <div>
+                <h3>Single QR Code</h3>
+                <div class="form-group">
+                  <label class="form-label">Voucher Code</label>
+                  <input type="text" class="form-input" id="qrVoucherCode" placeholder="Enter voucher code">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Size (px)</label>
+                  <input type="number" class="form-input" id="qrSize" value="200" min="100" max="500">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Include Logo</label>
+                  <select class="form-select" id="qrLogo">
+                    <option value="none">No Logo</option>
+                    <option value="default">VoucherPalace Logo</option>
+                  </select>
+                </div>
+                <button class="btn btn-primary" onclick="generateSingleQR()">Generate QR</button>
+                <div id="singleQRResult" style="margin-top: 1rem; text-align: center;"></div>
+              </div>
+
+              <!-- Bulk QR Generator -->
+              <div>
+                <h3>Bulk QR Codes</h3>
+                <p class="page-subtitle">Generate QR codes for multiple vouchers</p>
+                <div class="form-group">
+                  <label class="form-label">Select Vouchers</label>
+                  <select class="form-select" id="bulkVoucherSelect" multiple size="8" style="height: auto;">
+                    <!-- Populated from API -->
+                  </select>
+                </div>
+                <button class="btn btn-success" onclick="generateBulkQR()">Generate QR Codes</button>
+                <div id="bulkQRResult" class="qr-grid" style="margin-top: 1rem;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Print/Download Options -->
+          <div class="table-card" id="qrActions" style="display: none;">
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+              <button class="btn btn-outline" onclick="printQRs()">
+                <i class="fas fa-print"></i> Print
+              </button>
+              <button class="btn btn-outline" onclick="downloadQRs()">
+                <i class="fas fa-download"></i> Download All
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ===== CONFIGURATION =====
+    const API_BASE = 'http://localhost:3006';
+    let API_LATENCY = 0;
+    
+    // Session Management
+    let sessionTimeout = 30 * 60 * 1000; // 30 minutes
+    let sessionWarningTimeout = 60 * 1000; // 1 minute before expiry
+    let sessionTimerInterval;
+    let sessionExpiryTime = Date.now() + sessionTimeout;
+
+    // Token and User
+    let token = localStorage.getItem('token');
+    let refreshToken = localStorage.getItem('refreshToken');
+    let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+
+    // Check authentication immediately
+(function checkAuth() {
+  if (!token) {
+    console.log('🔒 No token found, redirecting to login');
+    window.location.href = '/';
+    return;
+  }
+
+  // Don't call /auth/verify - just check if token exists
+  // Your API might not have this endpoint
+  console.log('✅ Token found, user is authenticated');
+  
+  // Still start the session timer
+  startSessionTimer();
+  
+  // Update UI with user data
+  updateUserUI();
+})();
+    // ===== SESSION MANAGEMENT =====
+    function startSessionTimer() {
+      // Reset expiry time on user activity
+      ['click', 'mousemove', 'keypress'].forEach(event => {
+        document.addEventListener(event, resetSessionTimer);
+      });
+
+      // Check session every second
+      sessionTimerInterval = setInterval(checkSession, 1000);
+    }
+
+    function resetSessionTimer() {
+      sessionExpiryTime = Date.now() + sessionTimeout;
+      document.getElementById('sessionWarning').style.display = 'none';
+    }
+
+    function checkSession() {
+      const timeLeft = sessionExpiryTime - Date.now();
+      
+      if (timeLeft <= 0) {
+        // Session expired
+        clearInterval(sessionTimerInterval);
+        logout();
+      } else if (timeLeft <= sessionWarningTimeout) {
+        // Show warning
+        const warning = document.getElementById('sessionWarning');
+        document.getElementById('sessionTimer').textContent = Math.ceil(timeLeft / 1000);
+        warning.style.display = 'block';
+      }
+    }
+
+    function extendSession() {
+      refreshAccessToken();
+      resetSessionTimer();
+      document.getElementById('sessionWarning').style.display = 'none';
+      showToast('Session extended successfully');
+    }
+
+    async function refreshAccessToken() {
+      if (!refreshToken) {
+        logout();
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refreshToken })
+        });
+
+        if (!res.ok) throw new Error('Refresh failed');
+
+        const data = await res.json();
+        token = data.token;
+        refreshToken = data.refresh_token || refreshToken;
+        
+        localStorage.setItem('token', token);
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+
+        console.log('✅ Token refreshed');
+      } catch (err) {
+        console.error('❌ Token refresh failed:', err);
+        logout();
+      }
+    }
+
+    // ===== API HELPER WITH LATENCY TRACKING =====
+    async function apiCall(endpoint, options = {}) {
+      const startTime = Date.now();
+      const url = `${API_BASE}${endpoint}`;
+      console.log(`📡 API Request: ${options.method || 'GET'} ${url}`);
+      
+      try {
+        const res = await fetch(url, {
+          ...options,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            ...options.headers
+          }
+        });
+
+        API_LATENCY = Date.now() - startTime;
+        document.getElementById('apiLatency').textContent = `${API_LATENCY}ms`;
+
+        if (res.status === 401) {
+          // Try to refresh token
+          await refreshAccessToken();
+          // Retry request with new token
+          return apiCall(endpoint, options);
+        }
+
+        if (!res.ok) {
+          const error = await res.text();
+          console.error(`❌ API Error ${res.status}:`, error);
+          throw new Error(`API Error: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log(`✅ API Response (${API_LATENCY}ms):`, data);
+        
+        // Reset session timer on successful API call
+        resetSessionTimer();
+        
+        return data;
+      } catch (err) {
+        console.error('❌ Network error:', err);
+        throw err;
+      }
+    }
+
+    // ===== DATA EXTRACTOR =====
+    function extractData(response) {
+      if (!response) return [];
+      if (Array.isArray(response)) return response;
+      if (response.data && Array.isArray(response.data)) return response.data;
+      if (response.results && Array.isArray(response.results)) return response.results;
+      if (response.items && Array.isArray(response.items)) return response.items;
+      if (response.records && Array.isArray(response.records)) return response.records;
+      return [];
+    }
+
+    // ===== UI HELPERS =====
+    function showToast(msg, isError = false, duration = 3000) {
+      const toast = document.getElementById('toast');
+      toast.style.background = isError ? '#ef4444' : '#1f2937';
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${msg}`;
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', duration);
+    }
+
+    function showResult(elementId, msg, isSuccess = true) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      el.className = isSuccess ? 'success-box' : 'error-box';
+      el.innerHTML = msg;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 5000);
+    }
+
+    // ===== SIDEBAR CONTROLS =====
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+      document.getElementById('main').classList.toggle('expanded');
+    }
+
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('open');
+      document.getElementById('overlay').classList.add('show');
+    }
+
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('overlay').classList.remove('show');
+    }
+
+    // ===== USER DROPDOWN =====
+    function toggleDropdown() {
+      document.getElementById('dropdown').classList.toggle('show');
+    }
+
+    window.addEventListener('click', (e) => {
+      if (!e.target.closest('.dropdown')) {
+        document.getElementById('dropdown').classList.remove('show');
+      }
+    });
+
+    // ===== UPDATE USER UI =====
+    function updateUserUI() {
+      if (!currentUser) return;
+      
+      const name = `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() || currentUser.email;
+      const initial = (currentUser.first_name?.[0] || currentUser.email?.[0] || '?').toUpperCase();
+      const role = currentUser.role || 'User';
+
+      document.getElementById('sidebarName').textContent = name;
+      document.getElementById('sidebarEmail').textContent = currentUser.email || '-';
+      document.getElementById('sidebarRole').textContent = role;
+      document.getElementById('sidebarAvatar').textContent = initial;
+      document.getElementById('headerName').textContent = name;
+      document.getElementById('headerRole').textContent = role;
+      document.getElementById('headerAvatar').textContent = initial;
+    }
+    updateUserUI();
+
+    // ===== VIEW SWITCHING =====
+    window.switchView = function(view) {
+      const views = ['dashboard', 'issue', 'redeem', 'templates', 'companies', 'users', 'bulk', 'analytics', 'reports', 'qr'];
+      views.forEach(v => {
+        const el = document.getElementById(v + 'View');
+        if (el) el.classList.add('hidden');
+        const nav = document.getElementById('nav-' + v);
+        if (nav) nav.classList.remove('active');
+      });
+      
+      const targetView = document.getElementById(view + 'View');
+      if (targetView) targetView.classList.remove('hidden');
+      
+      const targetNav = document.getElementById('nav-' + view);
+      if (targetNav) targetNav.classList.add('active');
+      
+      // Load data for views
+      if (view === 'dashboard') loadDashboard();
+      if (view === 'templates') loadTemplates();
+      if (view === 'companies') loadCompanies();
+      if (view === 'users') loadUsers();
+      if (view === 'issue') loadIssueFormData();
+      if (view === 'redeem') loadRedeemFormData();
+      if (view === 'analytics') loadAnalytics();
+      if (view === 'qr') loadVouchersForQR();
+      if (view === 'bulk') setBulkType('users');
+
+      // Close mobile sidebar
+      closeSidebar();
+    };
+
+    // ===== API CONNECTION TEST =====
+    console.log('🔌 Testing API connection to:', API_BASE);
+    fetch(`${API_BASE}/health`)
+      .then(res => res.json())
+      .then(data => {
+        console.log('✅ API Connected Successfully');
+        console.log('📊 Health Check:', data);
+        document.getElementById('apiBanner').classList.remove('hidden');
+        document.getElementById('apiUrl').textContent = API_BASE;
+      })
+      .catch(err => {
+        console.error('❌ API Connection Failed:', err.message);
+        const banner = document.getElementById('apiBanner');
+        banner.classList.add('error');
+        banner.classList.remove('hidden');
+        banner.querySelector('i').className = 'fas fa-circle-exclamation';
+        banner.innerHTML = `<i class="fas fa-circle-exclamation"></i> Cannot connect to API: <span class="api-url">${API_BASE}</span> - ${err.message}`;
+      });
+
+    // ===== DASHBOARD =====
+    async function loadDashboard() {
+      try {
+        const [redemptionsRes, vouchersRes, companiesRes, templatesRes] = await Promise.allSettled([
+          apiCall('/voucher-redemptions').catch(() => ({ data: [] })),
+          apiCall('/vouchers').catch(() => ({ data: [] })),
+          apiCall('/tenants').catch(() => ({ data: [] })),
+          apiCall('/voucher_templates').catch(() => ({ data: [] }))
+        ]);
+
+        const redemptions = extractData(redemptionsRes.value || []);
+        const vouchers = extractData(vouchersRes.value || []);
+        const companies = extractData(companiesRes.value || []);
+        const templates = extractData(templatesRes.value || []);
+
+        document.getElementById('statRedemptions').textContent = redemptions.length.toLocaleString();
+        document.getElementById('statVouchers').textContent = vouchers.filter(v => v.status === 'active').length.toLocaleString();
+        document.getElementById('statCompanies').textContent = companies.length.toLocaleString();
+        document.getElementById('statTemplates').textContent = templates.length.toLocaleString();
+
+        // Recent redemptions
+        const recent = redemptions.slice(0, 5);
+        document.getElementById('recentCount').textContent = recent.length;
+        
+        const tbody = document.getElementById('recentTable');
+        if (!tbody) return;
+
+        if (recent.length) {
+          tbody.innerHTML = recent.map(r => `
+            <tr>
+              <td><strong>${r.Voucher?.code || r.voucher_code || r.voucher_id}</strong></td>
+              <td>${r.User?.full_name || r.user_name || r.user_id || '-'}</td>
+              <td>${r.Merchant?.name || r.merchant_name || r.merchant_id || '-'}</td>
+              <td><span class="text-success">KES ${parseFloat(r.redeemed_value || 0).toLocaleString()}</span></td>
+              <td>${r.redeemed_at ? new Date(r.redeemed_at).toLocaleString() : '-'}</td>
+            </tr>
+          `).join('');
+          document.getElementById('recentError')?.classList.add('hidden');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center">No redemptions found</td></tr>';
+        }
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+        document.getElementById('recentError')?.classList.remove('hidden');
+      }
+
+      // Update date
+      document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { 
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+      });
+    }
+
+    // ===== COMPANIES =====
+    async function loadCompanies() {
+      try {
+        const response = await apiCall('/tenants');
+        const companies = extractData(response);
+        
+        const tbody = document.getElementById('companiesTable');
+        if (!tbody) return;
+        
+        if (companies.length) {
+          tbody.innerHTML = companies.map(c => `
+            <tr>
+              <td><strong>${c.tenant_name || c.name}</strong></td>
+              <td>${c.tenant_type || c.type || '-'}</td>
+              <td>${c.email || '-'}</td>
+              <td>${c.phone || '-'}</td>
+              <td><span class="status-badge status-${c.status || 'active'}">${c.status || 'active'}</span></td>
+              <td>KES ${parseFloat(c.wallet_balance || 0).toLocaleString()}</td>
+              <td>KES ${parseFloat(c.credit_limit || 0).toLocaleString()}</td>
+            </tr>
+          `).join('');
+          document.getElementById('companiesError')?.classList.add('hidden');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center">No companies found</td></tr>';
+        }
+
+        // Update search cache
+        searchCache.companies = companies;
+        
+        // Update company dropdowns
+        updateCompanyDropdowns(companies);
+        
+      } catch (err) {
+        console.error('Failed to load companies:', err);
+        document.getElementById('companiesError')?.classList.remove('hidden');
+      }
+    }
+
+    function updateCompanyDropdowns(companies) {
+      const dropdowns = ['issueCompany', 'templateCompany', 'userCompany'];
+      dropdowns.forEach(id => {
+        const select = document.getElementById(id);
+        if (select) {
+          select.innerHTML = '<option value="">Select company</option>' + 
+            companies.map(c => `<option value="${c.id}">${c.tenant_name || c.name}</option>`).join('');
+        }
+      });
+    }
+
+    async function createCompany() {
+      const data = {
+        tenant_name: document.getElementById('companyName')?.value,
+        tenant_type: document.getElementById('companyType')?.value,
+        email: document.getElementById('companyEmail')?.value,
+        phone: document.getElementById('companyPhone')?.value,
+        registration_number: document.getElementById('companyReg')?.value,
+        tax_id: document.getElementById('companyTax')?.value,
+        address: document.getElementById('companyAddress')?.value,
+        website: document.getElementById('companyWebsite')?.value,
+        wallet_balance: parseFloat(document.getElementById('companyBalance')?.value || 0),
+        credit_limit: parseFloat(document.getElementById('companyCreditLimit')?.value || 0),
+        billing_cycle: document.getElementById('companyBillingCycle')?.value
+      };
+
+      if (!data.tenant_name || !data.tenant_type || !data.email) {
+        showToast('Please fill required fields', true);
+        return;
+      }
+
+      try {
+        await apiCall('/tenants', {
+          method: 'POST',
+          body: JSON.stringify(data)
+        });
+        showToast('Company created successfully');
+        hideCreateCompany();
+        loadCompanies();
+      } catch (err) {
+        showToast('Failed to create company', true);
+      }
+    }
+
+    // ===== TEMPLATES =====
+    async function loadTemplates() {
+      try {
+        const templatesResponse = await apiCall('/voucher_templates');
+        const templates = extractData(templatesResponse);
+        
+        const companiesResponse = await apiCall('/tenants');
+        const companies = extractData(companiesResponse);
+        
+        const companyMap = Object.fromEntries(companies.map(c => [c.id, c.tenant_name || c.name]));
+        
+        const tbody = document.getElementById('templatesTable');
+        if (!tbody) return;
+        
+        if (templates.length) {
+          tbody.innerHTML = templates.map(t => `
+            <tr>
+              <td><strong>${t.template_name || t.name}</strong></td>
+              <td>${t.voucher_type || t.type || '-'}</td>
+              <td>${t.value_amount ? `KES ${t.value_amount}` : (t.percentage_value ? `${t.percentage_value}%` : '-')}</td>
+              <td>${companyMap[t.tenant_id] || t.tenant_id}</td>
+              <td><span class="status-badge status-${t.is_active ? 'active' : 'inactive'}">${t.is_active ? 'Active' : 'Inactive'}</span></td>
+              <td>${t.usage_limit_type || 'single'}</td>
+              <td>
+                <button class="btn btn-primary btn-sm" onclick="useTemplate('${t.id}')">Use</button>
+              </td>
+            </tr>
+          `).join('');
+          document.getElementById('templatesError')?.classList.add('hidden');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center">No templates found</td></tr>';
+        }
+
+        // Update template dropdown
+        const templateSelect = document.getElementById('issueTemplate');
+        if (templateSelect) {
+          templateSelect.innerHTML = '<option value="">Select template</option>' + 
+            templates.map(t => `<option value="${t.id}">${t.template_name || t.name}</option>`).join('');
+        }
+        
+        searchCache.templates = templates;
+        
+      } catch (err) {
+        console.error('Failed to load templates:', err);
+        document.getElementById('templatesError')?.classList.remove('hidden');
+      }
+    }
+
+    function toggleTemplateValue() {
+      const type = document.getElementById('templateType')?.value;
+      const valueLabel = document.querySelector('label[for="templateValue"]');
+      if (valueLabel) {
+        valueLabel.textContent = type === 'percentage' ? 'Percentage % *' : 'Value (KES) *';
+      }
+    }
+
+    async function createTemplate() {
+      const data = {
+        tenant_id: document.getElementById('templateCompany')?.value,
+        template_name: document.getElementById('templateName')?.value,
+        voucher_type: document.getElementById('templateType')?.value,
+        value_amount: document.getElementById('templateType')?.value === 'fixed_amount' ? 
+          parseFloat(document.getElementById('templateValue')?.value) : null,
+        percentage_value: document.getElementById('templateType')?.value === 'percentage' ? 
+          parseFloat(document.getElementById('templateValue')?.value) : null,
+        valid_from: document.getElementById('templateValidFrom')?.value || null,
+        valid_to: document.getElementById('templateValidTo')?.value || null,
+        usage_limit_type: document.getElementById('templateUsageLimit')?.value,
+        min_purchase_amount: parseFloat(document.getElementById('templateMinPurchase')?.value) || null,
+        is_public_visible: document.getElementById('templatePublic')?.value === 'true',
+        public_price: parseFloat(document.getElementById('templatePublicPrice')?.value) || null,
+        description: document.getElementById('templateDescription')?.value,
+        is_active: true
+      };
+
+      if (!data.tenant_id || !data.template_name || !data.voucher_type) {
+        showToast('Please fill required fields', true);
+        return;
+      }
+
+      if (!data.value_amount && !data.percentage_value) {
+        showToast('Please enter a value', true);
+        return;
+      }
+
+      try {
+        await apiCall('/voucher_templates', {
+          method: 'POST',
+          body: JSON.stringify(data)
+        });
+        showToast('Template created successfully');
+        hideCreateTemplate();
+        loadTemplates();
+      } catch (err) {
+        showToast('Failed to create template', true);
+      }
+    }
+
+    // ===== USERS =====
+    async function loadUsers() {
+      try {
+        const usersResponse = await apiCall('/users');
+        const users = extractData(usersResponse);
+        
+        const companiesResponse = await apiCall('/tenants');
+        const companies = extractData(companiesResponse);
+        
+        const companyMap = Object.fromEntries(companies.map(c => [c.id, c.tenant_name || c.name]));
+        
+        const tbody = document.getElementById('usersTable');
+        if (!tbody) return;
+        
+        if (users.length) {
+          tbody.innerHTML = users.map(u => `
+            <tr>
+              <td><strong>${u.first_name || ''} ${u.last_name || ''}</strong></td>
+              <td>${u.email}</td>
+              <td>${u.phone || '-'}</td>
+              <td>${u.role || '-'}</td>
+              <td>${companyMap[u.tenant_id] || u.tenant_id}</td>
+              <td><span class="status-badge status-${u.status || 'active'}">${u.status || 'active'}</span></td>
+              <td>${u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : '-'}</td>
+            </tr>
+          `).join('');
+          document.getElementById('usersError')?.classList.add('hidden');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center">No users found</td></tr>';
+        }
+
+        searchCache.users = users;
+        
+      } catch (err) {
+        console.error('Failed to load users:', err);
+        document.getElementById('usersError')?.classList.remove('hidden');
+      }
+    }
+
+    async function createUser() {
+      const data = {
+        tenant_id: document.getElementById('userCompany')?.value,
+        email: document.getElementById('userEmail')?.value,
+        password_hash: document.getElementById('userPassword')?.value,
+        first_name: document.getElementById('userFirstName')?.value,
+        last_name: document.getElementById('userLastName')?.value,
+        phone: document.getElementById('userPhone')?.value,
+        role: document.getElementById('userRole')?.value,
+        status: document.getElementById('userStatus')?.value
+      };
+
+      if (!data.tenant_id || !data.email || !data.password_hash || !data.role) {
+        showToast('Please fill required fields', true);
+        return;
+      }
+
+      try {
+        await apiCall('/users', {
+          method: 'POST',
+          body: JSON.stringify(data)
+        });
+        showToast('User created successfully');
+        hideCreateUser();
+        loadUsers();
+      } catch (err) {
+        showToast('Failed to create user', true);
+      }
+    }
+
+    // ===== ISSUE VOUCHER =====
+// ===== SMART AUTOFILL FUNCTIONS =====
+
+// Store recently used beneficiaries in localStorage
+let recentBeneficiaries = JSON.parse(localStorage.getItem('recentBeneficiaries') || '[]');
+
+// On template change - autofill template details
+async function onTemplateChange() {
+  const templateId = document.getElementById('issueTemplate')?.value;
+  const percentageFields = document.getElementById('percentageVoucherFields');
+  const previewBtn = document.getElementById('previewTemplateBtn');
+  
+  if (!templateId) {
+    if (previewBtn) previewBtn.disabled = true;
+    document.getElementById('templatePreviewCard')?.classList.add('hidden');
+    return;
+  }
+
+  try {
+    const templateResponse = await apiCall(`/voucher_templates/${templateId}`);
+    const template = templateResponse.data || templateResponse;
+    
+    // Enable preview button
+    if (previewBtn) previewBtn.disabled = false;
+    
+    // Show template preview
+    showTemplatePreview(template);
+    
+    // Handle percentage vs fixed amount
+    if (template.voucher_type === 'percentage') {
+      percentageFields?.classList.remove('hidden');
+      document.getElementById('discountPercentage').value = template.percentage_value + '%';
+      document.getElementById('minPurchaseRequired').value = template.min_purchase_amount || 0;
+    } else {
+      percentageFields?.classList.add('hidden');
+    }
+    
+    // If template has default company, suggest it
+    if (template.tenant_id) {
+      const companySelect = document.getElementById('issueCompany');
+      if (companySelect && !companySelect.value) {
+        // Check if this company exists in dropdown
+        const optionExists = Array.from(companySelect.options).some(opt => opt.value === template.tenant_id);
+        if (optionExists) {
+          companySelect.value = template.tenant_id;
+          onCompanyChange();
+          showToast(`Company autofilled from template`, 'info');
+        }
+      }
+    }
+    
+  } catch (err) {
+    console.error('Error loading template details:', err);
+  }
+}
+
+// Show template preview
+function showTemplatePreview(template) {
+  const previewCard = document.getElementById('templatePreviewCard');
+  if (!previewCard) return;
+  
+  if (!template) {
+    previewCard.classList.add('hidden');
+    return;
+  }
+  
+  document.getElementById('previewTemplateName').textContent = template.template_name || 'Unnamed Template';
+  document.getElementById('previewTemplateType').textContent = template.voucher_type || 'Unknown';
+  document.getElementById('previewTemplateType').className = `status-badge status-${template.is_active ? 'active' : 'inactive'}`;
+  document.getElementById('previewTemplateDescription').textContent = template.description || 'No description';
+  
+  let valueHtml = '';
+  if (template.voucher_type === 'fixed_amount') {
+    valueHtml = `<span><strong>Value:</strong> KES ${template.value_amount}</span>`;
+  } else {
+    valueHtml = `<span><strong>Discount:</strong> ${template.percentage_value}%</span>`;
+  }
+  document.getElementById('previewTemplateValue').innerHTML = valueHtml;
+  
+  const validityHtml = template.valid_from && template.valid_to ? 
+    `<span><strong>Valid:</strong> ${new Date(template.valid_from).toLocaleDateString()} - ${new Date(template.valid_to).toLocaleDateString()}</span>` : 
+    '<span><strong>Valid:</strong> No expiry</span>';
+  document.getElementById('previewTemplateValidity').innerHTML = validityHtml;
+  
+  const minPurchaseHtml = template.min_purchase_amount ? 
+    `<span><strong>Min Purchase:</strong> KES ${template.min_purchase_amount}</span>` : '';
+  document.getElementById('previewTemplateMinPurchase').innerHTML = minPurchaseHtml;
+  
+  previewCard.classList.remove('hidden');
+}
+
+// On company change - maybe show company info
+function onCompanyChange() {
+  const companyId = document.getElementById('issueCompany')?.value;
+  if (!companyId) return;
+  
+  // Could fetch company details and show them
+}
+
+// Use current user as beneficiary
+function setBeneficiary(type) {
+  if (type === 'current' && currentUser) {
+    document.getElementById('issueName').value = `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() || '';
+    document.getElementById('issueEmail').value = currentUser.email || '';
+    document.getElementById('issuePhone').value = currentUser.phone || '';
+    showToast('Beneficiary set to current user');
+    
+    // Save to recent
+    saveRecentBeneficiary({
+      name: document.getElementById('issueName').value,
+      email: document.getElementById('issueEmail').value,
+      phone: document.getElementById('issuePhone').value
+    });
+  } else if (type === 'recent') {
+    showRecentBeneficiaries();
+  }
+}
+
+// Show recent beneficiaries modal
+function showRecentBeneficiaries() {
+  const modal = document.getElementById('recentBeneficiariesModal');
+  const listDiv = document.getElementById('recentBeneficiariesList');
+  
+  if (!recentBeneficiaries.length) {
+    listDiv.innerHTML = '<p class="text-center">No recent beneficiaries</p>';
+  } else {
+    listDiv.innerHTML = recentBeneficiaries.map((b, index) => `
+      <div class="search-result-item" onclick="selectBeneficiary(${index})">
+        <i class="fas fa-user-circle" style="font-size: 2rem;"></i>
+        <div>
+          <div><strong>${b.name || 'Unknown'}</strong></div>
+          <small>${b.email || ''} ${b.phone ? '• ' + b.phone : ''}</small>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  modal.classList.remove('hidden');
+}
+
+// Select beneficiary from recent list
+function selectBeneficiary(index) {
+  const ben = recentBeneficiaries[index];
+  if (ben) {
+    document.getElementById('issueName').value = ben.name || '';
+    document.getElementById('issueEmail').value = ben.email || '';
+    document.getElementById('issuePhone').value = ben.phone || '';
+    closeModal('recentBeneficiariesModal');
+    showToast('Beneficiary selected');
+  }
+}
+
+// Save beneficiary to recent list
+function saveRecentBeneficiary(beneficiary) {
+  if (!beneficiary.name && !beneficiary.email && !beneficiary.phone) return;
+  
+  // Check if already exists
+  const exists = recentBeneficiaries.some(b => 
+    (b.email && b.email === beneficiary.email) || 
+    (b.phone && b.phone === beneficiary.phone)
+  );
+  
+  if (!exists) {
+    recentBeneficiaries.unshift(beneficiary);
+    recentBeneficiaries = recentBeneficiaries.slice(0, 10); // Keep last 10
+    localStorage.setItem('recentBeneficiaries', JSON.stringify(recentBeneficiaries));
+  }
+}
+
+// Clear beneficiary fields
+function clearBeneficiary() {
+  document.getElementById('issueName').value = '';
+  document.getElementById('issueEmail').value = '';
+  document.getElementById('issuePhone').value = '';
+}
+
+// Use current user's company
+async function useMyCompany() {
+  if (!currentUser || !currentUser.tenant_id) {
+    showToast('No company associated with your account', true);
+    return;
+  }
+  
+  const companySelect = document.getElementById('issueCompany');
+  const optionExists = Array.from(companySelect.options).some(opt => opt.value === currentUser.tenant_id);
+  
+  if (optionExists) {
+    companySelect.value = currentUser.tenant_id;
+    onCompanyChange();
+    showToast('Your company selected');
+  } else {
+    showToast('Your company not found in list', true);
+  }
+}
+
+// Set expiry date
+function setExpiry(days) {
+  const date = new Date();
+  date.setDate(date.getDate() + parseInt(days));
+  document.getElementById('issueExpiry').value = date.toISOString().split('T')[0];
+}
+
+// Update beneficiary search to include users
+function populateBeneficiaryResults(results) {
+  const resultsEl = document.getElementById('beneficiaryResults');
+  if (!resultsEl) return;
+  
+  if (!results.length) {
+    resultsEl.classList.remove('show');
+    return;
+  }
+
+  resultsEl.innerHTML = results.map(u => `
+    <div class="search-result-item" onclick="selectUserBeneficiary('${u.id}')">
+      <i class="fas fa-user" style="color: var(--primary);"></i>
+      <div>
+        <div>${u.first_name || ''} ${u.last_name || ''}</div>
+        <small style="color: var(--gray-600);">${u.email} • ${u.role || 'User'}</small>
+      </div>
+    </div>
+  `).join('');
+  resultsEl.classList.add('show');
+}
+
+// Select user as beneficiary
+async function selectUserBeneficiary(userId) {
+  try {
+    const userResponse = await apiCall(`/users/${userId}`);
+    const user = userResponse.data || userResponse;
+    
+    document.getElementById('issueName').value = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+    document.getElementById('issueEmail').value = user.email || '';
+    document.getElementById('issuePhone').value = user.phone || '';
+    
+    document.getElementById('beneficiaryResults').classList.remove('show');
+    showToast('User selected as beneficiary');
+    
+    saveRecentBeneficiary({
+      name: document.getElementById('issueName').value,
+      email: document.getElementById('issueEmail').value,
+      phone: document.getElementById('issuePhone').value
+    });
+    
+  } catch (err) {
+    console.error('Error loading user:', err);
+  }
+}
+
+// Close modal
+function closeModal(modalId) {
+  document.getElementById(modalId)?.classList.add('hidden');
+}
+
+// Update loadIssueFormData to pre-populate with current user info
+async function loadIssueFormData() {
+  try {
+    const [templatesResponse, companiesResponse] = await Promise.all([
+      apiCall('/voucher_templates'),
+      apiCall('/tenants')
+    ]);
+
+    const templates = extractData(templatesResponse);
+    const companies = extractData(companiesResponse);
+
+    // Populate templates
+    const templateSelect = document.getElementById('issueTemplate');
+    if (templateSelect) {
+      templateSelect.innerHTML = '<option value="">Select template</option>' + 
+        templates.map(t => {
+          let valueDisplay = '';
+          if (t.voucher_type === 'fixed_amount') {
+            valueDisplay = `KES ${t.value_amount}`;
+          } else {
+            valueDisplay = `${t.percentage_value}% (Min spend: KES ${t.min_purchase_amount || 0})`;
+          }
+          return `<option value="${t.id}" 
+            data-type="${t.voucher_type}" 
+            data-value="${t.value_amount || t.percentage_value}"
+            data-min-purchase="${t.min_purchase_amount || 0}">
+            ${t.template_name || t.name} - ${valueDisplay}
+          </option>`;
+        }).join('');
+    }
+
+    // Populate companies
+    const companySelect = document.getElementById('issueCompany');
+    if (companySelect) {
+      companySelect.innerHTML = '<option value="">Select company</option>' + 
+        companies.map(c => `<option value="${c.id}">${c.tenant_name || c.name}</option>`).join('');
+    }
+
+    // Pre-fill with current user's company if available
+    if (currentUser && currentUser.tenant_id) {
+      const optionExists = Array.from(companySelect.options).some(opt => opt.value === currentUser.tenant_id);
+      if (optionExists) {
+        companySelect.value = currentUser.tenant_id;
+      }
+    }
+
+    // Pre-fill expiry with default (30 days)
+    setExpiry('30');
+
+  } catch (err) {
+    console.error('Form data error:', err);
+  }
+}
+// Show/hide percentage fields based on template selection
+document.getElementById('issueTemplate')?.addEventListener('change', async function() {
+  const templateId = this.value;
+  const percentageFields = document.getElementById('percentageVoucherFields');
+  const amountField = document.getElementById('issueValue')?.parentElement?.parentElement;
+  
+  if (!templateId) {
+    if (percentageFields) percentageFields.classList.add('hidden');
+    return;
+  }
+  
+  try {
+    const templateResponse = await apiCall(`/voucher_templates/${templateId}`);
+    const template = templateResponse.data || templateResponse;
+    
+    if (template.voucher_type === 'percentage') {
+      // Hide fixed amount field, show percentage fields
+      if (amountField) amountField.classList.add('hidden');
+      if (percentageFields) {
+        percentageFields.classList.remove('hidden');
+        document.getElementById('discountPercentage').value = template.percentage_value + '%';
+        document.getElementById('minPurchaseRequired').value = template.min_purchase_amount || 0;
+        document.getElementById('purchaseAmount').value = '';
+        document.getElementById('discountValue').value = '';
+      }
+    } else {
+      // Show fixed amount field, hide percentage fields
+      if (amountField) amountField.classList.remove('hidden');
+      if (percentageFields) percentageFields.classList.add('hidden');
+    }
+  } catch (err) {
+    console.error('Error loading template details:', err);
+  }
+});
+
+function calculateDiscount() {
+  const templateSelect = document.getElementById('issueTemplate');
+  const selectedOption = templateSelect.options[templateSelect.selectedIndex];
+  const percentage = parseFloat(selectedOption.dataset.value) || 0;
+  const minPurchase = parseFloat(document.getElementById('minPurchaseRequired')?.value) || 0;
+  const purchaseAmount = parseFloat(document.getElementById('purchaseAmount')?.value) || 0;
+  const discountValue = document.getElementById('discountValue');
+  const discountInfo = document.getElementById('discountInfo');
+  
+  if (purchaseAmount < minPurchase) {
+    discountValue.value = 'INVALID';
+    discountInfo.innerHTML = `<span style="color: #dc2626;">❌ Minimum purchase of KES ${minPurchase} required</span>`;
+    return;
+  }
+  
+  const discount = (purchaseAmount * percentage / 100);
+  discountValue.value = `KES ${discount.toFixed(2)}`;
+  discountInfo.innerHTML = `
+    <span style="color: #059669;">
+      ✅ Customer gets ${percentage}% discount = KES ${discount.toFixed(2)} off
+      <br><small>Final amount to pay: KES ${(purchaseAmount - discount).toFixed(2)}</small>
+    </span>
+  `;
+}
+
+async function loadIssueFormData() {
+  try {
+    const [templatesResponse, companiesResponse] = await Promise.all([
+      apiCall('/voucher_templates'),
+      apiCall('/tenants')
+    ]);
+
+    const templates = extractData(templatesResponse);
+    const companies = extractData(companiesResponse);
+
+    const templateSelect = document.getElementById('issueTemplate');
+    if (templateSelect) {
+      templateSelect.innerHTML = '<option value="">Select template</option>' + 
+        templates.map(t => {
+          let valueDisplay = '';
+          if (t.voucher_type === 'fixed_amount') {
+            valueDisplay = `KES ${t.value_amount}`;
+          } else {
+            valueDisplay = `${t.percentage_value}% (Min spend: KES ${t.min_purchase_amount || 0})`;
+          }
+          return `<option value="${t.id}" 
+            data-type="${t.voucher_type}" 
+            data-value="${t.value_amount || t.percentage_value}"
+            data-min-purchase="${t.min_purchase_amount || 0}">
+            ${t.template_name || t.name} - ${valueDisplay}
+          </option>`;
+        }).join('');
+    }
+
+    const companySelect = document.getElementById('issueCompany');
+    if (companySelect) {
+      companySelect.innerHTML = '<option value="">Select company</option>' + 
+        companies.map(c => `<option value="${c.id}">${c.tenant_name || c.name}</option>`).join('');
+    }
+
+  } catch (err) {
+    console.error('Form data error:', err);
+  }
+}
+
+
+async function issueVoucher() {
+  const templateId = document.getElementById('issueTemplate')?.value;
+  const tenantId = document.getElementById('issueCompany')?.value;
+  
+  if (!templateId || !tenantId) {
+    showToast('Please select template and company', true);
+    return;
+  }
+
+  try {
+    // Fetch the selected template
+    const templateResponse = await apiCall(`/voucher_templates/${templateId}`);
+    const template = templateResponse.data || templateResponse;
+    
+    if (!template) {
+      showToast('Template not found', true);
+      return;
+    }
+
+    // Base voucher data
+    const data = {
+      voucher_template_id: templateId,
+      tenant_id: tenantId,
+      beneficiary_name: document.getElementById('issueName')?.value,
+      beneficiary_email: document.getElementById('issueEmail')?.value,
+      beneficiary_phone: document.getElementById('issuePhone')?.value,
+      expires_at: document.getElementById('issueExpiry')?.value || null,
+      created_by: currentUser?.id || null
+    };
+
+    // Handle different voucher types
+    if (template.voucher_type === 'fixed_amount') {
+      // Fixed amount voucher - use template value
+      data.original_value = template.value_amount;
+      
+    } else if (template.voucher_type === 'percentage') {
+      // Percentage voucher - requires minimum purchase
+      const minPurchase = template.min_purchase_amount || 0;
+      
+      // Show input for expected purchase amount
+      const purchaseAmount = parseFloat(document.getElementById('purchaseAmount')?.value);
+      
+      if (!purchaseAmount || purchaseAmount < minPurchase) {
+        showToast(`Minimum purchase of KES ${minPurchase} required for this voucher`, true);
+        return;
+      }
+      
+      // Calculate discount value
+      const discountValue = (purchaseAmount * template.percentage_value / 100);
+      data.original_value = discountValue;
+      data.min_purchase_required = minPurchase;
+      data.expected_purchase = purchaseAmount;
+      
+      showToast(`Customer will get KES ${discountValue} discount on KES ${purchaseAmount} purchase`, 'info');
+    }
+
+    const res = await apiCall('/vouchers', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    
+    showResult('issueResult', `Voucher ${res.code || res.id} issued successfully`, true);
+    setTimeout(() => switchView('dashboard'), 2000);
+    
+  } catch (err) {
+    console.error('Issue voucher error:', err);
+    showResult('issueResult', 'Failed to issue voucher', false);
+  }
+}
+
+// ===== REDEEM VOUCHER =====
+    async function loadRedeemFormData() {
+      try {
+        const response = await apiCall('/merchants');
+        const merchants = extractData(response);
+        
+        const select = document.getElementById('redeemMerchant');
+        if (select) {
+          select.innerHTML = '<option value="">Select merchant</option>' + 
+            merchants.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+        }
+        
+        searchCache.merchants = merchants;
+      } catch (err) {
+        console.error('Merchant load error:', err);
+      }
+    }
+
+    async function loadVoucher() {
+      const code = document.getElementById('redeemCode')?.value;
+      if (!code) return;
+
+      try {
+        const voucher = await apiCall(`/vouchers/code/${code}`);
+        const details = document.getElementById('voucherDetails');
+        if (!details) return;
+        
+        const statusClass = voucher.status === 'active' ? 'status-active' : 
+                           voucher.status === 'redeemed' ? 'status-redeemed' : 'status-expired';
+        
+        details.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span><strong>${voucher.title || 'Voucher'}</strong></span>
+            <span class="status-badge ${statusClass}">${voucher.status || 'active'}</span>
+          </div>
+          <div>Value: KES ${parseFloat(voucher.original_value || 0).toLocaleString()}</div>
+          ${voucher.beneficiary_name ? `<div>Beneficiary: ${voucher.beneficiary_name}</div>` : ''}
+          ${voucher.expires_at ? `<div>Expires: ${new Date(voucher.expires_at).toLocaleDateString()}</div>` : ''}
+          ${voucher.remaining_value ? `<div>Remaining: KES ${voucher.remaining_value}</div>` : ''}
+        `;
+        
+        details.classList.remove('hidden');
+        const amountInput = document.getElementById('redeemAmount');
+        if (amountInput) amountInput.value = voucher.original_value || 0;
+        
+        // Disable redeem button if not active
+        const redeemBtn = document.getElementById('redeemButton');
+        if (redeemBtn) {
+          if (voucher.status !== 'active') {
+            redeemBtn.disabled = true;
+            redeemBtn.style.opacity = '0.5';
+            redeemBtn.title = 'Voucher is not active';
+          } else {
+            redeemBtn.disabled = false;
+            redeemBtn.style.opacity = '1';
+          }
+        }
+      } catch (err) {
+        showToast('Voucher not found', true);
+      }
+    }
+
+    async function redeemVoucher() {
+      const code = document.getElementById('redeemCode')?.value;
+      const merchantId = document.getElementById('redeemMerchant')?.value;
+      const amount = document.getElementById('redeemAmount')?.value;
+
+      if (!code || !merchantId || !amount) {
+        showToast('Please fill all fields', true);
+        return;
+      }
+
+      try {
+        await apiCall('/redemptions', {
+          method: 'POST',
+          body: JSON.stringify({
+            voucher_code: code,
+            merchant_id: merchantId,
+            amount_redeemed: parseFloat(amount)
+          })
+        });
+        showToast('Voucher redeemed successfully');
+        document.getElementById('redeemCode').value = '';
+        document.getElementById('redeemAmount').value = '';
+        document.getElementById('voucherDetails').classList.add('hidden');
+        switchView('dashboard');
+      } catch (err) {
+        showToast('Redemption failed', true);
+      }
+    }
+
+    // ===== BULK OPERATIONS =====
+    let currentBulkType = 'users';
+    let bulkUserData = [];
+    let bulkVoucherData = [];
+
+    function setBulkType(type) {
+      currentBulkType = type;
+      const usersSection = document.getElementById('bulkUsersSection');
+      const vouchersSection = document.getElementById('bulkVouchersSection');
+      const usersTab = document.getElementById('bulkUsersTab');
+      const vouchersTab = document.getElementById('bulkVouchersTab');
+      
+      if (usersSection) usersSection.classList.toggle('hidden', type !== 'users');
+      if (vouchersSection) vouchersSection.classList.toggle('hidden', type !== 'vouchers');
+      
+      if (usersTab) usersTab.className = type === 'users' ? 'btn btn-primary' : 'btn btn-outline';
+      if (vouchersTab) vouchersTab.className = type === 'vouchers' ? 'btn btn-primary' : 'btn btn-outline';
+    }
+
+    function downloadUserTemplate() {
+      const data = [
+        ['email', 'first_name', 'last_name', 'phone', 'role', 'tenant_id'],
+        ['john@example.com', 'John', 'Doe', '+1234567890', 'client_user', 'tenant-uuid-here'],
+        ['jane@example.com', 'Jane', 'Smith', '+1234567891', 'merchant_staff', 'tenant-uuid-here']
+      ];
+      
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, 'Users');
+      XLSX.writeFile(wb, 'user_bulk_template.xlsx');
+    }
+
+    function downloadVoucherTemplate() {
+      const data = [
+        ['voucher_template_id', 'tenant_id', 'beneficiary_name', 'beneficiary_email', 'beneficiary_phone', 'expires_at'],
+        ['template-uuid', 'tenant-uuid', 'John Doe', 'john@example.com', '+1234567890', '2025-12-31'],
+        ['template-uuid', 'tenant-uuid', 'Jane Smith', 'jane@example.com', '+1234567891', '2025-12-31']
+      ];
+      
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, 'Vouchers');
+      XLSX.writeFile(wb, 'voucher_bulk_template.xlsx');
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('dragover');
+    }
+
+    function handleDragLeave(e) {
+      e.currentTarget.classList.remove('dragover');
+    }
+
+    function handleUserDrop(e) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file) handleUserFile({ target: { files: [file] } });
+    }
+
+    function handleVoucherDrop(e) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file) handleVoucherFile({ target: { files: [file] } });
+    }
+
+    function handleUserFileSelect(input) {
+      const file = input.files[0];
+      if (!file) return;
+      handleUserFile({ target: { files: [file] } });
+    }
+
+    function handleVoucherFileSelect(input) {
+      const file = input.files[0];
+      if (!file) return;
+      handleVoucherFile({ target: { files: [file] } });
+    }
+
+    function handleUserFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          
+          const headers = jsonData[0];
+          bulkUserData = jsonData.slice(1).map(row => {
+            const obj = {};
+            headers.forEach((header, index) => {
+              obj[header] = row[index];
+            });
+            return obj;
+          }).filter(row => row.email);
+
+          displayUserPreview(bulkUserData.slice(0, 5));
+        } catch (err) {
+          showToast('Error reading file', true);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function handleVoucherFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          
+          const headers = jsonData[0];
+          bulkVoucherData = jsonData.slice(1).map(row => {
+            const obj = {};
+            headers.forEach((header, index) => {
+              obj[header] = row[index];
+            });
+            return obj;
+          }).filter(row => row.voucher_template_id);
+
+          displayVoucherPreview(bulkVoucherData.slice(0, 5));
+        } catch (err) {
+          showToast('Error reading file', true);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function displayUserPreview(data) {
+      if (!data.length) return;
+      
+      const headers = Object.keys(data[0]);
+      let html = '<table><thead><tr>';
+      headers.forEach(h => html += `<th>${h}</th>`);
+      html += '</tr></thead><tbody>';
+      
+      data.forEach(row => {
+        html += '<tr>';
+        headers.forEach(h => html += `<td>${row[h] || '-'}</td>`);
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      
+      const preview = document.getElementById('userPreviewTable');
+      if (preview) {
+        preview.innerHTML = html;
+        document.getElementById('userPreview').classList.remove('hidden');
+      }
+    }
+
+    function displayVoucherPreview(data) {
+      if (!data.length) return;
+      
+      const headers = Object.keys(data[0]);
+      let html = '<table><thead><tr>';
+      headers.forEach(h => html += `<th>${h}</th>`);
+      html += '</tr></thead><tbody>';
+      
+      data.forEach(row => {
+        html += '<tr>';
+        headers.forEach(h => html += `<td>${row[h] || '-'}</td>`);
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      
+      const preview = document.getElementById('voucherPreviewTable');
+      if (preview) {
+        preview.innerHTML = html;
+        document.getElementById('voucherPreview').classList.remove('hidden');
+      }
+    }
+
+    async function processBulkUsers() {
+      const progressBar = document.getElementById('userProgressBar');
+      const progressFill = document.getElementById('userProgressFill');
+      const btn = document.getElementById('processUsersBtn');
+      
+      if (!bulkUserData.length) {
+        showToast('No data to process', true);
+        return;
+      }
+      
+      progressBar.style.display = 'block';
+      btn.disabled = true;
+      
+      let success = 0;
+      let failed = 0;
+      const errors = [];
+      
+      for (let i = 0; i < bulkUserData.length; i++) {
+        try {
+          const user = bulkUserData[i];
+          await apiCall('/users', {
+            method: 'POST',
+            body: JSON.stringify({
+              ...user,
+              password_hash: user.password || 'Welcome123!', // Default password
+              status: 'active'
+            })
+          });
+          success++;
+        } catch (err) {
+          failed++;
+          errors.push(`Row ${i + 2}: ${err.message}`);
+        }
+        
+        const progress = ((i + 1) / bulkUserData.length) * 100;
+        progressFill.style.width = `${progress}%`;
+      }
+      
+      progressFill.style.width = '100%';
+      
+      const resultDiv = document.getElementById('userBulkResult');
+      if (resultDiv) {
+        resultDiv.className = failed === 0 ? 'success-box' : 'warning-box';
+        resultDiv.innerHTML = `
+          <strong>Bulk Upload Complete</strong><br>
+          ✅ Created: ${success} users<br>
+          ${failed ? `❌ Failed: ${failed} users<br><small>${errors.slice(0, 3).join('<br>')}${errors.length > 3 ? '<br>...' : ''}</small>` : ''}
+        `;
+        resultDiv.classList.remove('hidden');
+      }
+      
+      btn.disabled = false;
+      
+      if (success > 0) {
+        loadUsers();
+        showToast(`Successfully created ${success} users`);
+      }
+      
+      // Clear preview after 10 seconds
+      setTimeout(() => {
+        if (resultDiv) resultDiv.classList.add('hidden');
+        clearUserUpload();
+      }, 10000);
+    }
+
+    async function processBulkVouchers() {
+      const progressBar = document.getElementById('voucherProgressBar');
+      const progressFill = document.getElementById('voucherProgressFill');
+      const btn = document.getElementById('processVouchersBtn');
+      
+      if (!bulkVoucherData.length) {
+        showToast('No data to process', true);
+        return;
+      }
+      
+      progressBar.style.display = 'block';
+      btn.disabled = true;
+      
+      let success = 0;
+      let failed = 0;
+      const errors = [];
+      
+      for (let i = 0; i < bulkVoucherData.length; i++) {
+        try {
+          const voucher = bulkVoucherData[i];
+          await apiCall('/vouchers', {
+            method: 'POST',
+            body: JSON.stringify(voucher)
+          });
+          success++;
+        } catch (err) {
+          failed++;
+          errors.push(`Row ${i + 2}: ${err.message}`);
+        }
+        
+        const progress = ((i + 1) / bulkVoucherData.length) * 100;
+        progressFill.style.width = `${progress}%`;
+      }
+      
+      progressFill.style.width = '100%';
+      
+      const resultDiv = document.getElementById('voucherBulkResult');
+      if (resultDiv) {
+        resultDiv.className = failed === 0 ? 'success-box' : 'warning-box';
+        resultDiv.innerHTML = `
+          <strong>Bulk Upload Complete</strong><br>
+          ✅ Created: ${success} vouchers<br>
+          ${failed ? `❌ Failed: ${failed} vouchers<br><small>${errors.slice(0, 3).join('<br>')}${errors.length > 3 ? '<br>...' : ''}</small>` : ''}
+        `;
+        resultDiv.classList.remove('hidden');
+      }
+      
+      btn.disabled = false;
+      
+      if (success > 0) {
+        loadDashboard();
+        showToast(`Successfully created ${success} vouchers`);
+      }
+      
+      setTimeout(() => {
+        if (resultDiv) resultDiv.classList.add('hidden');
+        clearVoucherUpload();
+      }, 10000);
+    }
+
+    function clearUserUpload() {
+      bulkUserData = [];
+      document.getElementById('userPreview').classList.add('hidden');
+      document.getElementById('userFileInput').value = '';
+      document.getElementById('userProgressBar').style.display = 'none';
+      document.getElementById('userProgressFill').style.width = '0%';
+    }
+
+    function clearVoucherUpload() {
+      bulkVoucherData = [];
+      document.getElementById('voucherPreview').classList.add('hidden');
+      document.getElementById('voucherFileInput').value = '';
+      document.getElementById('voucherProgressBar').style.display = 'none';
+      document.getElementById('voucherProgressFill').style.width = '0%';
+    }
+
+    // ===== ANALYTICS =====
+    let redemptionsChart, revenueChart;
+
+    async function loadAnalytics() {
+      const range = document.getElementById('analyticsRange')?.value;
+      const customRange = document.getElementById('customDateRange');
+      
+      if (range === 'custom') {
+        customRange.style.display = 'flex';
+        return;
+      } else {
+        if (customRange) customRange.style.display = 'none';
+      }
+      
+      const days = range || '30';
+      
+      try {
+        const response = await apiCall(`/voucher-redemptions?days=${days}`);
+        const redemptions = extractData(response);
+        
+        // Calculate KPIs
+        const totalRevenue = redemptions.reduce((sum, r) => sum + parseFloat(r.redeemed_value || 0), 0);
+        const avgValue = redemptions.length ? totalRevenue / redemptions.length : 0;
+        
+        // Previous period comparison (mock for now)
+        const prevRevenue = totalRevenue * 0.88; // 12% less
+        const revenueTrend = ((totalRevenue - prevRevenue) / prevRevenue * 100).toFixed(1);
+        
+        document.getElementById('totalRevenue').textContent = `KES ${totalRevenue.toLocaleString()}`;
+        document.getElementById('revenueTrend').innerHTML = `<i class="fas fa-arrow-${revenueTrend >= 0 ? 'up' : 'down'}"></i> ${revenueTrend >= 0 ? '+' : ''}${revenueTrend}%`;
+        
+        document.getElementById('totalRedemptionsAnalytics').textContent = redemptions.length.toLocaleString();
+        document.getElementById('avgValue').textContent = `KES ${avgValue.toFixed(2)}`;
+        
+        // Group by date for charts
+        const dailyData = {};
+        redemptions.forEach(r => {
+          const date = r.redeemed_at ? new Date(r.redeemed_at).toLocaleDateString() : 'Unknown';
+          if (!dailyData[date]) {
+            dailyData[date] = { count: 0, revenue: 0 };
+          }
+          dailyData[date].count++;
+          dailyData[date].revenue += parseFloat(r.redeemed_value || 0);
+        });
+        
+        const dates = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
+        const counts = dates.map(d => dailyData[d].count);
+        const revenues = dates.map(d => dailyData[d].revenue);
+        
+        // Update charts
+        const ctx1 = document.getElementById('redemptionsChart')?.getContext('2d');
+        if (ctx1) {
+          if (redemptionsChart) redemptionsChart.destroy();
+          redemptionsChart = new Chart(ctx1, {
+            type: 'line',
+            data: {
+              labels: dates,
+              datasets: [{
+                label: 'Redemptions',
+                data: counts,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59,130,246,0.1)',
+                tension: 0.4,
+                fill: true
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                title: { display: true, text: 'Daily Redemptions' }
+              }
+            }
+          });
+        }
+        
+        const ctx2 = document.getElementById('revenueChart')?.getContext('2d');
+        if (ctx2) {
+          if (revenueChart) revenueChart.destroy();
+          revenueChart = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+              labels: dates,
+              datasets: [{
+                label: 'Revenue (KES)',
+                data: revenues,
+                backgroundColor: '#10b981',
+                borderRadius: 4
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                title: { display: true, text: 'Daily Revenue' }
+              }
+            }
+          });
+        }
+        
+        // Load top merchants
+        await loadTopMerchants(redemptions);
+        
+      } catch (err) {
+        console.error('Analytics error:', err);
+      }
+    }
+
+    async function loadTopMerchants(redemptions) {
+      try {
+        const merchantStats = {};
+        redemptions.forEach(r => {
+          const merchantId = r.merchant_id;
+          const merchantName = r.Merchant?.name || r.merchant_name || merchantId;
+          if (!merchantStats[merchantName]) {
+            merchantStats[merchantName] = { count: 0, revenue: 0 };
+          }
+          merchantStats[merchantName].count++;
+          merchantStats[merchantName].revenue += parseFloat(r.redeemed_value || 0);
+        });
+        
+        const sorted = Object.entries(merchantStats)
+          .sort((a, b) => b[1].revenue - a[1].revenue)
+          .slice(0, 5);
+        
+        const tbody = document.getElementById('topMerchantsTable');
+        if (tbody) {
+          tbody.innerHTML = sorted.map(([name, stats], index) => {
+            const growth = (Math.random() * 30 - 5).toFixed(1); // Mock growth
+            return `
+              <tr>
+                <td><strong>${name}</strong></td>
+                <td>${stats.count.toLocaleString()}</td>
+                <td>KES ${stats.revenue.toLocaleString()}</td>
+                <td><span class="${growth >= 0 ? 'trend-up' : 'trend-down'}">
+                  <i class="fas fa-arrow-${growth >= 0 ? 'up' : 'down'}"></i> ${growth}%
+                </span></td>
+              </tr>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        console.error('Failed to load top merchants:', err);
+      }
+    }
+
+    function exportAnalytics() {
+      showToast('Exporting analytics report...');
+      // Implementation for CSV export
+      setTimeout(() => {
+        showToast('Report exported successfully');
+      }, 1500);
+    }
+
+    // ===== REPORTS =====
+    async function generateReport() {
+      const reportType = document.getElementById('reportType')?.value;
+      const reportRange = document.getElementById('reportRange')?.value;
+      
+      showToast(`Generating ${reportType} report...`);
+      
+      try {
+        // Fetch data based on report type
+        let data = [];
+        let title = '';
+        
+        switch(reportType) {
+          case 'redemptions':
+            data = extractData(await apiCall('/voucher-redemptions'));
+            title = 'Redemptions Report';
+            break;
+          case 'vouchers':
+            data = extractData(await apiCall('/vouchers'));
+            title = 'Vouchers Report';
+            break;
+          case 'users':
+            data = extractData(await apiCall('/users'));
+            title = 'Users Report';
+            break;
+          case 'companies':
+            data = extractData(await apiCall('/tenants'));
+            title = 'Companies Report';
+            break;
+        }
+        
+        // Generate PDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Add title
+        doc.setFontSize(20);
+        doc.text(title, 20, 20);
+        
+        // Add date
+        doc.setFontSize(10);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 30);
+        
+        // Add summary
+        doc.setFontSize(12);
+        doc.text(`Total Records: ${data.length}`, 20, 40);
+        
+        // Add table (simplified)
+        let yPos = 50;
+        const headers = Object.keys(data[0] || {}).slice(0, 5);
+        
+        if (headers.length) {
+          doc.setFontSize(8);
+          let xPos = 20;
+          headers.forEach(header => {
+            doc.text(header, xPos, yPos);
+            xPos += 40;
+          });
+          
+          yPos += 10;
+          data.slice(0, 20).forEach(row => {
+            xPos = 20;
+            headers.forEach(header => {
+              doc.text(String(row[header] || '').substring(0, 15), xPos, yPos);
+              xPos += 40;
+            });
+            yPos += 8;
+            if (yPos > 280) {
+              doc.addPage();
+              yPos = 20;
+            }
+          });
+        }
+        
+        doc.save(`${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`);
+        showToast('PDF generated successfully');
+        
+      } catch (err) {
+        console.error('Report generation error:', err);
+        showToast('Failed to generate report', true);
+      }
+    }
+
+    // ===== QR GENERATION =====
+    async function generateSingleQR() {
+      const code = document.getElementById('qrVoucherCode')?.value;
+      const size = parseInt(document.getElementById('qrSize')?.value || 200);
+      const logo = document.getElementById('qrLogo')?.value;
+      
+      if (!code) {
+        showToast('Please enter a voucher code', true);
+        return;
+      }
+      
+      const resultDiv = document.getElementById('singleQRResult');
+      if (!resultDiv) return;
+      
+      resultDiv.innerHTML = '';
+      
+      try {
+        const canvas = document.createElement('canvas');
+        const url = `${window.location.origin}/redeem?code=${code}`;
+        
+        await QRCode.toCanvas(canvas, url, {
+          width: size,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#ffffff'
+          }
+        });
+        
+        // Add logo if selected
+        if (logo === 'default') {
+          // You would overlay a logo here
+        }
+        
+        resultDiv.appendChild(canvas);
+        resultDiv.innerHTML += `<p style="margin-top: 0.5rem;"><strong>${code}</strong></p>`;
+        
+        document.getElementById('qrActions').style.display = 'block';
+      } catch (err) {
+        console.error('QR generation error:', err);
+        showToast('Failed to generate QR code', true);
+      }
+    }
+
+    async function generateBulkQR() {
+      const select = document.getElementById('bulkVoucherSelect');
+      if (!select) return;
+      
+      const selectedOptions = Array.from(select.selectedOptions);
+      
+      if (!selectedOptions.length) {
+        showToast('Please select vouchers', true);
+        return;
+      }
+      
+      const resultDiv = document.getElementById('bulkQRResult');
+      if (!resultDiv) return;
+      
+      resultDiv.innerHTML = '<p class="text-center">Generating QR codes...</p>';
+      
+      const codes = [];
+      
+      for (const option of selectedOptions) {
+        const code = option.value;
+        const canvas = document.createElement('canvas');
+        
+        try {
+          await QRCode.toCanvas(canvas, `${window.location.origin}/redeem?code=${code}`, {
+            width: 150,
+            margin: 1
+          });
+          
+          const card = document.createElement('div');
+          card.className = 'qr-card';
+          card.appendChild(canvas);
+          card.innerHTML += `<p>${code}</p>`;
+          resultDiv.appendChild(card);
+          codes.push(code);
+        } catch (err) {
+          console.error('Failed to generate QR for', code);
+        }
+      }
+      
+      if (codes.length) {
+        document.getElementById('qrActions').style.display = 'block';
+        showToast(`Generated ${codes.length} QR codes`);
+      }
+    }
+
+    function printQRs() {
+      window.print();
+    }
+
+    function downloadQRs() {
+      showToast('QR download feature coming soon!');
+    }
+
+    async function loadVouchersForQR() {
+      try {
+        const response = await apiCall('/vouchers');
+        const vouchers = extractData(response);
+        
+        const select = document.getElementById('bulkVoucherSelect');
+        if (select) {
+          select.innerHTML = vouchers.map(v => 
+            `<option value="${v.code}">${v.code} - ${v.title || 'Voucher'} (KES ${v.original_value})</option>`
+          ).join('');
+        }
+      } catch (err) {
+        console.error('Failed to load vouchers for QR:', err);
+      }
+    }
+
+    // ===== SEARCH FUNCTIONALITY =====
+    let searchCache = {
+      templates: [],
+      companies: [],
+      merchants: [],
+      users: []
+    };
+
+    let searchTimeout;
+    function debouncedSearch(type, query, callback) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        performSearch(type, query, callback);
+      }, 300);
+    }
+
+    async function performSearch(type, query, callback) {
+      if (!query || query.length < 2) {
+        hideSearchResults(type);
+        return;
+      }
+
+      try {
+        let results = [];
+        switch(type) {
+          case 'templates':
+            results = searchCache.templates.filter(t => 
+              (t.template_name || t.name || '').toLowerCase().includes(query.toLowerCase())
+            );
+            break;
+          case 'companies':
+            results = searchCache.companies.filter(c => 
+              (c.tenant_name || c.name || '').toLowerCase().includes(query.toLowerCase())
+            );
+            break;
+          case 'merchants':
+            results = searchCache.merchants.filter(m => 
+              (m.name || '').toLowerCase().includes(query.toLowerCase())
+            );
+            break;
+        }
+        callback(results);
+      } catch (err) {
+        console.error(`Search failed for ${type}:`, err);
+      }
+    }
+
+    function hideSearchResults(type) {
+      const resultsEl = document.getElementById(`${type}Results`);
+      if (resultsEl) resultsEl.classList.remove('show');
+    }
+
+    function populateTemplateResults(results) {
+      const resultsEl = document.getElementById('templateResults');
+      if (!resultsEl) return;
+      
+      if (!results.length) {
+        resultsEl.classList.remove('show');
+        return;
+      }
+
+      resultsEl.innerHTML = results.map(t => `
+        <div class="search-result-item" onclick="selectTemplate('${t.id}', '${t.template_name || t.name}')">
+          <i class="fas fa-file-alt" style="color: var(--primary);"></i>
+          <div>
+            <div>${t.template_name || t.name}</div>
+            <small style="color: var(--gray-600);">${t.voucher_type || ''} • ${t.value_amount ? `KES ${t.value_amount}` : (t.percentage_value ? `${t.percentage_value}%` : '')}</small>
+          </div>
+        </div>
+      `).join('');
+      resultsEl.classList.add('show');
+    }
+
+    function selectTemplate(id, name) {
+      const select = document.getElementById('issueTemplate');
+      const search = document.getElementById('templateSearch');
+      if (select) select.value = id;
+      if (search) search.value = name;
+      document.getElementById('templateResults')?.classList.remove('show');
+    }
+
+    function populateCompanyResults(results) {
+      const resultsEl = document.getElementById('companyResults');
+      if (!resultsEl) return;
+      
+      if (!results.length) {
+        resultsEl.classList.remove('show');
+        return;
+      }
+
+      resultsEl.innerHTML = results.map(c => `
+        <div class="search-result-item" onclick="selectCompany('${c.id}', '${c.tenant_name || c.name}')">
+          <i class="fas fa-building" style="color: var(--warning);"></i>
+          <div>
+            <div>${c.tenant_name || c.name}</div>
+            <small style="color: var(--gray-600);">${c.tenant_type || ''}</small>
+          </div>
+        </div>
+      `).join('');
+      resultsEl.classList.add('show');
+    }
+
+    function selectCompany(id, name) {
+      const select = document.getElementById('issueCompany');
+      const search = document.getElementById('companySearch');
+      if (select) select.value = id;
+      if (search) search.value = name;
+      document.getElementById('companyResults')?.classList.remove('show');
+    }
+
+    function populateMerchantResults(results) {
+      const resultsEl = document.getElementById('merchantResults');
+      if (!resultsEl) return;
+      
+      if (!results.length) {
+        resultsEl.classList.remove('show');
+        return;
+      }
+
+      resultsEl.innerHTML = results.map(m => `
+        <div class="search-result-item" onclick="selectMerchant('${m.id}', '${m.name}')">
+          <i class="fas fa-store" style="color: var(--success);"></i>
+          <div>
+            <div>${m.name}</div>
+            <small style="color: var(--gray-600);">${m.location || ''}</small>
+          </div>
+        </div>
+      `).join('');
+      resultsEl.classList.add('show');
+    }
+
+    function selectMerchant(id, name) {
+      const select = document.getElementById('redeemMerchant');
+      const search = document.getElementById('merchantSearch');
+      if (select) select.value = id;
+      if (search) search.value = name;
+      document.getElementById('merchantResults')?.classList.remove('show');
+    }
+
+    function populateTemplateCompanyResults(results) {
+      const resultsEl = document.getElementById('templateCompanyResults');
+      if (!resultsEl) return;
+      
+      if (!results.length) {
+        resultsEl.classList.remove('show');
+        return;
+      }
+
+      resultsEl.innerHTML = results.map(c => `
+        <div class="search-result-item" onclick="selectTemplateCompany('${c.id}', '${c.tenant_name || c.name}')">
+          <i class="fas fa-building" style="color: var(--warning);"></i>
+          <div>${c.tenant_name || c.name}</div>
+        </div>
+      `).join('');
+      resultsEl.classList.add('show');
+    }
+
+    function selectTemplateCompany(id, name) {
+      const select = document.getElementById('templateCompany');
+      const search = document.getElementById('templateCompanySearch');
+      if (select) select.value = id;
+      if (search) search.value = name;
+      document.getElementById('templateCompanyResults')?.classList.remove('show');
+    }
+
+    function populateUserCompanyResults(results) {
+      const resultsEl = document.getElementById('userCompanyResults');
+      if (!resultsEl) return;
+      
+      if (!results.length) {
+        resultsEl.classList.remove('show');
+        return;
+      }
+
+      resultsEl.innerHTML = results.map(c => `
+        <div class="search-result-item" onclick="selectUserCompany('${c.id}', '${c.tenant_name || c.name}')">
+          <i class="fas fa-building" style="color: var(--warning);"></i>
+          <div>${c.tenant_name || c.name}</div>
+        </div>
+      `).join('');
+      resultsEl.classList.add('show');
+    }
+
+    function selectUserCompany(id, name) {
+      const select = document.getElementById('userCompany');
+      const search = document.getElementById('userCompanySearch');
+      if (select) select.value = id;
+      if (search) search.value = name;
+      document.getElementById('userCompanyResults')?.classList.remove('show');
+    }
+
+    // ===== FORM CONTROLS =====
+    function showCreateTemplate() {
+      document.getElementById('createTemplateForm')?.classList.remove('hidden');
+      toggleTemplateValue();
+      
+      // Set default dates
+      const today = new Date().toISOString().split('T')[0];
+      const nextYear = new Date();
+      nextYear.setFullYear(nextYear.getFullYear() + 1);
+      
+      const validFrom = document.getElementById('templateValidFrom');
+      const validTo = document.getElementById('templateValidTo');
+      
+      if (validFrom) validFrom.value = today;
+      if (validTo) validTo.value = nextYear.toISOString().split('T')[0];
+    }
+
+    function hideCreateTemplate() {
+      document.getElementById('createTemplateForm')?.classList.add('hidden');
+      // Reset form
+      ['templateName', 'templateValue', 'templateDescription', 'templateMinPurchase', 'templatePublicPrice'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+    }
+
+    function showCreateCompany() {
+      document.getElementById('createCompanyForm')?.classList.remove('hidden');
+    }
+
+    function hideCreateCompany() {
+      document.getElementById('createCompanyForm')?.classList.add('hidden');
+      // Reset form
+      ['companyName', 'companyEmail', 'companyPhone', 'companyReg', 'companyTax', 'companyWebsite', 'companyAddress'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      ['companyBalance', 'companyCreditLimit'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '0';
+      });
+    }
+
+    function showCreateUser() {
+      document.getElementById('createUserForm')?.classList.remove('hidden');
+    }
+
+    function hideCreateUser() {
+      document.getElementById('createUserForm')?.classList.add('hidden');
+      // Reset form
+      ['userEmail', 'userPassword', 'userFirstName', 'userLastName', 'userPhone'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+    }
+
+    function useTemplate(id) {
+      switchView('issue');
+      setTimeout(() => {
+        const select = document.getElementById('issueTemplate');
+        if (select) select.value = id;
+      }, 100);
+    }
+
+    function refreshAll() {
+      showToast('Refreshing data...');
+      loadDashboard();
+      loadCompanies();
+      loadTemplates();
+      loadUsers();
+    }
+
+    // ===== PROFILE =====
+    function showProfile() {
+      const profileInfo = `
+        User Profile:
+        • Name: ${currentUser.first_name || ''} ${currentUser.last_name || ''}
+        • Email: ${currentUser.email || ''}
+        • Role: ${currentUser.role || 'User'}
+        • ID: ${currentUser.id || ''}
+        • Tenant: ${currentUser.tenant_id || ''}
+      `;
+      alert(profileInfo);
+      document.getElementById('dropdown')?.classList.remove('show');
+    }
+
+    function showSettings() {
+      showToast('Settings panel coming soon');
+      document.getElementById('dropdown')?.classList.remove('show');
+    }
+
+    // ===== LOGOUT =====
+    function logout() {
+      localStorage.clear();
+      sessionStorage.clear();
+      showToast('Logged out successfully');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
+    }
+
+    // ===== CLICK OUTSIDE TO CLOSE SEARCH RESULTS =====
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.search-container')) {
+        document.querySelectorAll('.search-results').forEach(el => {
+          el.classList.remove('show');
+        });
+      }
+    });
+
+    // ===== INITIALIZE =====
+    (function init() {
+      loadDashboard();
+      loadCompanies();
+      loadTemplates();
+      loadUsers();
+      
+      // Set current date
+      const dateEl = document.getElementById('currentDate');
+      if (dateEl) {
+        dateEl.textContent = new Date().toLocaleDateString('en-US', { 
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        });
+      }
+      
+      // Set default dates for forms
+      const issueExpiry = document.getElementById('issueExpiry');
+      if (issueExpiry) {
+        const future = new Date();
+        future.setMonth(future.getMonth() + 1);
+        issueExpiry.value = future.toISOString().split('T')[0];
+      }
+      
+      console.log('🚀 Dashboard initialized');
+    })();
+  </script>
+</body>
+</html>

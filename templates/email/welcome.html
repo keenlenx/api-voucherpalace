@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .features {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+        }
+        .feature {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+        }
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Welcome to Voucher Platform!</h1>
+        </div>
+        <div class="content">
+            <h2>Hello {{name}},</h2>
+            
+            <p>Thank you for joining Voucher Platform! We're excited to have you on board.</p>
+            
+            <p>Your account has been successfully created and you can now start managing your vouchers.</p>
+            
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">🎫</div>
+                    <h3>Create Vouchers</h3>
+                    <p style="font-size: 14px;">Issue custom vouchers in seconds</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">✅</div>
+                    <h3>Track Redemptions</h3>
+                    <p style="font-size: 14px;">Monitor usage in real-time</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📊</div>
+                    <h3>Analytics</h3>
+                    <p style="font-size: 14px;">Get insights on performance</p>
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{loginLink}}" class="button">Go to Dashboard</a>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+            
+            <p style="color: #666; font-size: 14px;">
+                If you have any questions, check out our documentation or contact our support team.
+            </p>
+        </div>
+        <div class="footer">
+            <p>&copy; {{year}} Voucher Platform. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

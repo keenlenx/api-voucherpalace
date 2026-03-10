@@ -1,0 +1,3041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>VoucherFlow · Voucher Management</title>
+  
+  <!-- Font Awesome (only external dependency) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- QR Code library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  
+  <style>
+    /* ===== RESET & VARIABLES ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #3b82f6;
+      --success: #10b981;
+      --success-dark: #059669;
+      --danger: #ef4444;
+      --danger-dark: #dc2626;
+      --warning: #f59e0b;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+    }
+
+    body {
+      background: var(--gray-100);
+      min-height: 100vh;
+    }
+
+    /* ===== LAYOUT ===== */
+    .app {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Mobile-First Header */
+    .header {
+      background: white;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .menu-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      width: 2.5rem;
+      height: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-md);
+    }
+
+    .menu-btn:hover {
+      background: var(--gray-100);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo i {
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+
+    .logo span {
+      font-weight: 600;
+      font-size: 1.125rem;
+      color: var(--gray-900);
+    }
+
+    .user-avatar {
+      width: 2.5rem;
+      height: 2.5rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    /* Sidebar Drawer */
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 99;
+      display: none;
+      backdrop-filter: blur(4px);
+    }
+
+    .sidebar-overlay.active {
+      display: block;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -280px;
+      width: 280px;
+      height: 100%;
+      background: white;
+      z-index: 100;
+      transition: left 0.3s ease;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar.open {
+      left: 0;
+    }
+
+    .sidebar-header {
+      padding: 1.5rem 1rem;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .sidebar-logo i {
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+
+    .sidebar-logo span {
+      font-weight: 700;
+      font-size: 1.125rem;
+      color: var(--gray-900);
+    }
+
+    .close-btn {
+      background: var(--gray-100);
+      border: none;
+      width: 2rem;
+      height: 2rem;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--gray-600);
+    }
+
+    .user-profile {
+      padding: 1.5rem 1rem;
+      border-bottom: 1px solid var(--gray-200);
+      background: var(--gray-50);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-avatar-large {
+      width: 3rem;
+      height: 3rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 1.25rem;
+    }
+
+    .user-details {
+      flex: 1;
+    }
+
+    .user-name {
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .user-email {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .nav-menu {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding: 0.875rem 1rem;
+      border: none;
+      background: none;
+      color: var(--gray-600);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    .nav-item i {
+      width: 1.5rem;
+      margin-right: 0.75rem;
+      font-size: 1.125rem;
+    }
+
+    .nav-item:hover {
+      background: var(--gray-100);
+      color: var(--gray-900);
+    }
+
+    .nav-item.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .nav-divider {
+      height: 1px;
+      background: var(--gray-200);
+      margin: 1rem 0;
+    }
+
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      width: calc(100% - 2rem);
+      margin: 1rem;
+      padding: 0.875rem 1rem;
+      border: none;
+      background: var(--danger);
+      color: white;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover {
+      background: var(--danger-dark);
+    }
+
+    .logout-btn i {
+      width: 1.5rem;
+      margin-right: 0.75rem;
+    }
+
+    /* Main Content */
+    .main {
+      flex: 1;
+      padding: 1rem;
+    }
+
+    /* Desktop Styles */
+    @media (min-width: 1024px) {
+      .app {
+        flex-direction: row;
+      }
+
+      .header {
+        display: none;
+      }
+
+      .sidebar {
+        position: static;
+        left: 0;
+        width: 280px;
+        height: 100vh;
+      }
+
+      .main {
+        flex: 1;
+        padding: 1.5rem;
+        overflow-y: auto;
+        max-height: 100vh;
+      }
+
+      .sidebar-overlay {
+        display: none !important;
+      }
+    }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--gray-200);
+      margin-bottom: 1rem;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .card-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    /* ===== STATS GRID ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      border: 1px solid var(--gray-200);
+    }
+
+    .stat-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .stat-icon.blue { background: #dbeafe; color: var(--primary); }
+    .stat-icon.green { background: #dcfce7; color: var(--success); }
+    .stat-icon.purple { background: #f3e8ff; color: #9333ea; }
+    .stat-icon.yellow { background: #fef3c7; color: var(--warning); }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      line-height: 1.2;
+    }
+
+    /* ===== ACTION GRID ===== */
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .action-grid {
+        grid-template-columns: repeat(5, 1fr);
+      }
+    }
+
+    .action-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 1rem 0.5rem;
+      text-align: center;
+      border: 1px solid var(--gray-200);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .action-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .action-card i {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .action-card span {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .action-card.issue i { color: var(--primary); }
+    .action-card.redeem i { color: var(--success); }
+    .action-card.vouchers i { color: #9333ea; }
+    .action-card.templates i { color: var(--warning); }
+    .action-card.history i { color: var(--gray-600); }
+
+    /* ===== FORMS ===== */
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 0.25rem;
+    }
+
+    .form-label i {
+      color: var(--gray-400);
+      margin-right: 0.25rem;
+    }
+
+    .required {
+      color: var(--danger);
+      margin-left: 0.25rem;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      transition: all 0.2s;
+      background: white;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .form-input:read-only {
+      background: var(--gray-50);
+      cursor: not-allowed;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .input-group .form-input {
+      flex: 1;
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      min-height: 2.75rem;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: var(--success-dark);
+    }
+
+    .btn-outline {
+      background: white;
+      border: 1px solid var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .btn-outline:hover {
+      background: var(--gray-50);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: var(--danger-dark);
+    }
+
+    .btn-sm {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      min-height: 2.25rem;
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ===== SEARCH ===== */
+    .search-section {
+      background: var(--gray-50);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 50;
+      display: none;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .search-results.show {
+      display: block;
+    }
+
+    .search-item {
+      padding: 0.75rem;
+      cursor: pointer;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .search-item:hover {
+      background: var(--gray-50);
+    }
+
+    .search-item:last-child {
+      border-bottom: none;
+    }
+
+    /* ===== SELECTED USER CARD ===== */
+    .selected-card {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .selected-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .selected-avatar {
+      width: 2.5rem;
+      height: 2.5rem;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+    }
+
+    .selected-details {
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .selected-sub {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    .clear-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 0.5rem;
+    }
+
+    /* ===== TABLES & LISTS ===== */
+    .list-item {
+      padding: 1rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .list-item:last-child {
+      border-bottom: none;
+    }
+
+    .list-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .list-title {
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .list-sub {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    .list-meta {
+      font-size: 0.75rem;
+      color: var(--gray-400);
+      margin-top: 0.25rem;
+    }
+
+    /* ===== STATUS BADGES ===== */
+    .badge {
+      display: inline-flex;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge-warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-info {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    /* ===== FILTER BAR ===== */
+    .filter-bar {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .filter-bar .form-input,
+    .filter-bar .form-select {
+      width: auto;
+      min-width: 150px;
+    }
+
+    @media (max-width: 640px) {
+      .filter-bar .form-input,
+      .filter-bar .form-select {
+        width: 100%;
+      }
+    }
+
+    /* ===== UPLOAD AREA ===== */
+    .upload-area {
+      border: 2px dashed var(--gray-300);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      text-align: center;
+      background: var(--gray-50);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 1rem;
+    }
+
+    .upload-area:hover {
+      border-color: var(--primary);
+      background: #eff6ff;
+    }
+
+    .upload-area i {
+      font-size: 2rem;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .upload-hint {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-top: 0.25rem;
+    }
+
+    /* ===== PREVIEW CARD ===== */
+    .preview-card {
+      background: var(--gray-50);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .preview-title {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ===== RESULT SUMMARY ===== */
+    .result-summary {
+      padding: 1rem;
+      border-radius: var(--radius-lg);
+      margin-top: 1rem;
+    }
+
+    .result-summary.success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .result-summary.warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .result-summary.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      left: 1rem;
+      background: var(--gray-900);
+      color: white;
+      padding: 1rem;
+      border-radius: var(--radius-lg);
+      display: none;
+      z-index: 1000;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+    }
+
+    @media (min-width: 640px) {
+      .toast {
+        left: auto;
+        width: 320px;
+      }
+    }
+
+    .toast.success {
+      background: var(--success);
+    }
+
+    .toast.error {
+      background: var(--danger);
+    }
+
+    /* ===== SECTIONS ===== */
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    /* ===== UTILITIES ===== */
+    .hidden {
+      display: none !important;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .mt-2 {
+      margin-top: 0.5rem;
+    }
+
+    .mb-2 {
+      margin-bottom: 0.5rem;
+    }
+
+    .gap-2 {
+      gap: 0.5rem;
+    }
+
+    .flex {
+      display: flex;
+    }
+
+    .items-center {
+      align-items: center;
+    }
+
+    .justify-between {
+      justify-content: space-between;
+    }
+
+    .w-full {
+      width: 100%;
+    }
+    .mobile-user-dropdown {
+  position: relative;
+}
+
+.mobile-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  min-width: 180px;
+  z-index: 50;
+  display: none;
+  border: 1px solid var(--gray-200);
+}
+
+.mobile-dropdown-menu.show {
+  display: block;
+}
+
+.mobile-dropdown-item {
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  color: var(--gray-700);
+  transition: background 0.2s;
+}
+
+.mobile-dropdown-item:hover {
+  background: var(--gray-50);
+}
+
+.mobile-dropdown-item.text-danger {
+  color: var(--danger);
+}
+
+.mobile-dropdown-divider {
+  height: 1px;
+  background: var(--gray-200);
+  margin: 0.5rem 0;
+}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Mobile Header -->
+<header class="header">
+  <button class="menu-btn" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+  </button>
+  <div class="logo">
+    <i class="fas fa-ticket-alt"></i>
+    <span>VoucherFlow</span>
+  </div>
+<div class="mobile-user-dropdown">
+  <div class="user-avatar" id="mobileAvatar" onclick="toggleMobileDropdown()">?</div>
+  <div class="mobile-dropdown-menu" id="mobileDropdown">
+    <div class="mobile-dropdown-item" onclick="showMobileProfile()">
+      <i class="fas fa-user"></i> My Profile
+    </div>
+    <div class="mobile-dropdown-divider"></div>
+    <div class="mobile-dropdown-item text-danger" onclick="logout()">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </div>
+  </div>
+</div>
+</header>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <i class="fas fa-ticket-alt"></i>
+          <span>VoucherFlow</span>
+        </div>
+        <button class="close-btn" onclick="closeSidebar()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="user-profile">
+        <div class="user-info">
+          <div class="user-avatar-large" id="sidebarAvatar">?</div>
+          <div class="user-details">
+            <div class="user-name" id="sidebarName">Loading...</div>
+            <div class="user-email" id="sidebarEmail">-</div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" onclick="loadSection('dashboard')" id="nav-dashboard">
+          <i class="fas fa-chart-pie"></i> Dashboard
+        </button>
+        <button class="nav-item" onclick="loadSection('issue')" id="nav-issue">
+          <i class="fas fa-plus-circle"></i> Issue Voucher
+        </button>
+        <button class="nav-item" onclick="loadSection('vouchers')" id="nav-vouchers">
+          <i class="fas fa-ticket-alt"></i> Vouchers
+        </button>
+        <button class="nav-item" onclick="loadSection('redeem')" id="nav-redeem">
+          <i class="fas fa-check-circle"></i> Redeem
+        </button>
+        <button class="nav-item" onclick="loadSection('redemptions')" id="nav-redemptions">
+          <i class="fas fa-history"></i> Redemptions
+        </button>
+        <button class="nav-item" onclick="loadSection('templates')" id="nav-templates">
+          <i class="fas fa-file-alt"></i> Templates
+        </button>
+        <button class="nav-item" onclick="loadSection('companies')" id="nav-companies">
+          <i class="fas fa-building"></i> Companies
+        </button>
+        <button class="nav-item" onclick="loadSection('users')" id="nav-users">
+          <i class="fas fa-users"></i> Users
+        </button>
+        <div class="nav-divider"></div>
+        <button class="nav-item" onclick="loadSection('bulk-users')" id="nav-bulk-users">
+          <i class="fas fa-user-plus"></i> Bulk Users
+        </button>
+        <button class="nav-item" onclick="loadSection('bulk-vouchers')" id="nav-bulk-vouchers">
+          <i class="fas fa-layer-group"></i> Bulk Vouchers
+        </button>
+        <button class="nav-item" onclick="loadSection('analytics')" id="nav-analytics">
+          <i class="fas fa-chart-line"></i> Analytics
+        </button>
+        <button class="nav-item" onclick="loadSection('qr')" id="nav-qr">
+          <i class="fas fa-qrcode"></i> QR Generator
+        </button>
+      </nav>
+
+      <button class="logout-btn" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main" id="main">
+      <!-- All sections will be loaded here via JavaScript -->
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ===== CONFIGURATION =====
+    const API_BASE = '';
+    const token = localStorage.getItem('token');
+    
+    // ===== GLOBAL STATE =====
+    let currentUser = null;
+    let currentSection = 'dashboard';
+    let issueTemplates = [];
+    let issueUsers = [];
+    let merchants = [];
+    let templates = [];
+    let importFileData = null;
+    let selectedBeneficiary = null;
+    let selectedTemplate = null;
+    let currentVoucher = null;
+
+// ===== DECODE TOKEN =====
+try {
+  const payload = JSON.parse(atob(token.split('.')[1]));
+  currentUser = {
+    id: payload.user_id,
+    email: payload.email,
+    name: payload.name,
+    tenant_id: payload.tenant_id,
+    role: payload.role || 'User'
+  };
+  
+  const initial = (currentUser.name || 'U').charAt(0).toUpperCase();
+  document.getElementById('sidebarName').textContent = currentUser.name;
+  document.getElementById('sidebarEmail').textContent = currentUser.email;
+  document.getElementById('sidebarAvatar').textContent = initial;
+  document.getElementById('mobileAvatar').textContent = initial;
+} catch (e) {
+  console.error('Auth error:', e);
+  showToast('Please log in again', true);
+  setTimeout(() => window.location.href = '/', 2000);
+}
+
+    // ===== API CALL =====
+    async function apiCall(endpoint, options = {}) {
+      try {
+        const res = await fetch(API_BASE + endpoint, {
+          ...options,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            ...options.headers
+          }
+        });
+        
+        if (res.status === 401) {
+          showToast('Session expired', true);
+          setTimeout(() => window.location.href = '/login.html', 2000);
+          throw new Error('Unauthorized');
+        }
+        
+        if (!res.ok) {
+          const error = await res.text();
+          throw new Error(error || `HTTP ${res.status}`);
+        }
+        
+        return await res.json();
+      } catch (err) {
+        console.error('API Error:', err);
+        throw err;
+      }
+    }
+
+    // ===== TOAST =====
+    function showToast(message, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${isError ? 'error' : 'success'}`;
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', 3000);
+    }
+
+    // ===== SIDEBAR CONTROLS =====
+    window.toggleSidebar = () => {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('active');
+    };
+
+    window.closeSidebar = () => {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebarOverlay').classList.remove('active');
+    };
+  // ===== MOBILE DROPDOWN CONTROLS =====
+window.toggleMobileDropdown = () => {
+  const dropdown = document.getElementById('mobileDropdown');
+  dropdown.classList.toggle('show');
+};
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.mobile-user-dropdown')) {
+    const dropdown = document.getElementById('mobileDropdown');
+    if (dropdown) dropdown.classList.remove('show');
+  }
+});
+
+window.showMobileProfile = async () => {
+  // Close dropdown
+  document.getElementById('mobileDropdown').classList.remove('show');
+  
+  // Create and show profile modal
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  `;
+  
+  // Get user initials
+  const initials = (currentUser?.name || 'U').charAt(0).toUpperCase();
+  
+  modal.innerHTML = `
+    <div style="background: white; border-radius: var(--radius-lg); padding: 1.5rem; max-width: 400px; width: 90%;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 class="card-title">My Profile</h3>
+        <button class="close-btn" onclick="this.closest('.modal-overlay').remove()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: 600; margin: 0 auto 1rem;">
+          ${initials}
+        </div>
+        <div style="font-weight: 600; font-size: 1.25rem;">${currentUser?.name || 'User'}</div>
+        <div style="color: var(--gray-500);">${currentUser?.email || ''}</div>
+      </div>
+      <div style="border-top: 1px solid var(--gray-200); padding-top: 1rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span style="color: var(--gray-600);">Phone:</span>
+          <span style="font-weight: 500; font-family: monospace;">${currentUser?.phone || '-'}</span>
+        </div>
+       <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--gray-600);">Role:</span>
+          <span class="badge badge-info">${currentUser?.role || 'User'}</span>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Close modal when clicking outside
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+};
+
+// HEADER CONTROLS
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.mobile-user-dropdown')) {
+    document.getElementById('mobileDropdown')?.classList.remove('show');
+  }
+});
+
+window.showMobileProfile = async () => {
+  document.getElementById('mobileDropdown').classList.remove('show');
+  
+  // Create and show profile modal
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  `;
+  
+  modal.innerHTML = `
+    <div style="background: white; border-radius: var(--radius-lg); padding: 1.5rem; max-width: 400px; width: 90%;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 class="card-title">My Profile</h3>
+        <button class="close-btn" onclick="this.closest('.modal-overlay').remove()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: 600; margin: 0 auto 1rem;">
+          ${(currentUser?.name || 'U').charAt(0).toUpperCase()}
+        </div>
+        <div style="font-weight: 600; font-size: 1.25rem;">${currentUser?.name || 'User'}</div>
+        <div style="color: var(--gray-500);">${currentUser?.email || ''}</div>
+      </div>
+      <div style="border-top: 1px solid var(--gray-200); padding-top: 1rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span style="color: var(--gray-600);">User ID:</span>
+          <span style="font-weight: 500;">${currentUser?.id || '-'}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span style="color: var(--gray-600);">Tenant ID:</span>
+          <span style="font-weight: 500;">${currentUser?.tenant_id || '-'}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--gray-600);">Role:</span>
+          <span class="badge badge-info">${currentUser?.role || 'User'}</span>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Close modal when clicking outside
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+};
+    // ===== SECTION LOADER =====
+    window.loadSection = async (section) => {
+      currentSection = section;
+      
+      // Update nav items
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      document.getElementById(`nav-${section}`)?.classList.add('active');
+      
+      // Close sidebar on mobile
+      closeSidebar();
+      
+      // Load section content
+      const main = document.getElementById('main');
+      
+      switch(section) {
+        case 'dashboard':
+          await loadDashboardSection(main);
+          break;
+        case 'issue':
+          await loadIssueSection(main);
+          break;
+        case 'vouchers':
+          await loadVouchersSection(main);
+          break;
+        case 'redeem':
+          await loadRedeemSection(main);
+          break;
+        case 'redemptions':
+          await loadRedemptionsSection(main);
+          break;
+        case 'templates':
+          await loadTemplatesSection(main);
+          break;
+        case 'companies':
+          await loadCompaniesSection(main);
+          break;
+        case 'users':
+          await loadUsersSection(main);
+          break;
+        case 'bulk-users':
+          await loadBulkUsersSection(main);
+          break;
+        case 'bulk-vouchers':
+          await loadBulkVouchersSection(main);
+          break;
+        case 'analytics':
+          await loadAnalyticsSection(main);
+          break;
+        case 'qr':
+          await loadQRSection(main);
+          break;
+      }
+    };
+
+    // ===== DASHBOARD SECTION =====
+    async function loadDashboardSection(container) {
+      let html = `
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="fas fa-ticket-alt"></i></div>
+            <div class="stat-label">Active Vouchers</div>
+            <div class="stat-value" id="statVouchers">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-label">Redemptions</div>
+            <div class="stat-value" id="statRedemptions">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon purple"><i class="fas fa-store"></i></div>
+            <div class="stat-label">Merchants</div>
+            <div class="stat-value" id="statMerchants">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon yellow"><i class="fas fa-file-alt"></i></div>
+            <div class="stat-label">Templates</div>
+            <div class="stat-value" id="statTemplates">0</div>
+          </div>
+        </div>
+
+        <div class="action-grid">
+          <div class="action-card issue" onclick="loadSection('issue')">
+            <i class="fas fa-plus-circle"></i>
+            <span>Issue</span>
+          </div>
+          <div class="action-card redeem" onclick="loadSection('redeem')">
+            <i class="fas fa-check-circle"></i>
+            <span>Redeem</span>
+          </div>
+          <div class="action-card vouchers" onclick="loadSection('vouchers')">
+            <i class="fas fa-ticket-alt"></i>
+            <span>Vouchers</span>
+          </div>
+          <div class="action-card templates" onclick="loadSection('templates')">
+            <i class="fas fa-file-alt"></i>
+            <span>Templates</span>
+          </div>
+          <div class="action-card history" onclick="loadSection('redemptions')">
+            <i class="fas fa-history"></i>
+            <span>History</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Recent Redemptions</h2>
+            <span class="badge badge-info" id="recentCount">0</span>
+          </div>
+          <div id="recentList"></div>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+      
+      try {
+        // Load stats
+        const [vouchers, redemptions, merchantsData, templatesData] = await Promise.all([
+          apiCall(`/vouchers?tenant_id=${currentUser.tenant_id}`).catch(() => ({ data: [] })),
+          apiCall('/redemptions').catch(() => ({ data: [] })),
+          apiCall('/merchants').catch(() => []),
+          apiCall(`/voucher_templates?tenant_id=${currentUser.tenant_id}`).catch(() => ({ data: [] }))
+        ]);
+        
+        const vData = vouchers.data || [];
+        const rData = redemptions.data || [];
+        const mData = Array.isArray(merchantsData) ? merchantsData : (merchantsData.data || []);
+        const tData = templatesData.data || [];
+        
+        document.getElementById('statVouchers').textContent = vData.filter(v => v.status === 'active').length;
+        document.getElementById('statRedemptions').textContent = rData.length;
+        document.getElementById('statMerchants').textContent = mData.length;
+        document.getElementById('statTemplates').textContent = tData.length;
+        
+        // Recent redemptions
+        const recent = rData.slice(0, 5);
+        document.getElementById('recentCount').textContent = recent.length;
+        
+        const recentList = document.getElementById('recentList');
+        if (recent.length) {
+          recentList.innerHTML = recent.map(r => `
+            <div class="list-item">
+              <div class="list-row">
+                <span class="list-title">${r.voucher_code || r.voucher_id}</span>
+                <span class="badge badge-success">KES ${r.amount_redeemed}</span>
+              </div>
+              <div class="list-sub">${r.beneficiary_name || '-'} · ${r.merchant_name || r.merchant_id}</div>
+              <div class="list-meta">${new Date(r.created_at).toLocaleString()}</div>
+            </div>
+          `).join('');
+        } else {
+          recentList.innerHTML = '<div class="text-center list-item">No recent redemptions</div>';
+        }
+      } catch (err) {
+        showToast('Failed to load dashboard', true);
+      }
+    }
+
+    // ===== ISSUE VOUCHER SECTION =====
+    async function loadIssueSection(container) {
+      // Reset state
+      selectedTemplate = null;
+      selectedBeneficiary = null;
+      
+      // Load data first
+      try {
+        const [templatesData, usersData, companyData] = await Promise.all([
+          apiCall(`/voucher_templates?tenant_id=${currentUser.tenant_id}`),
+          apiCall('/users'),
+          apiCall(`/tenants/${currentUser.tenant_id}`)
+        ]);
+        
+        issueTemplates = templatesData.data || [];
+        issueUsers = usersData.data || [];
+        const company = companyData.data || companyData;
+        const companyName = company?.tenant_name || company?.name || 'Your Company';
+        
+        container.innerHTML = `
+          <div class="card">
+            <h2 class="card-title">Issue Voucher</h2>
+            
+            <div class="form-group">
+              <label class="form-label"><i class="fas fa-building"></i>Company</label>
+              <input type="text" class="form-input" id="issueCompany" value="${companyName}" readonly>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label"><i class="fas fa-layer-group"></i>Template <span class="required">*</span></label>
+              <select class="form-select" id="issueTemplate">
+                <option value="">Select template</option>
+                ${issueTemplates.map(t => `
+                  <option value="${t.id}" 
+                    data-type="${t.voucher_type}" 
+                    data-value="${t.value_amount || t.percentage_value}"
+                    data-min="${t.min_purchase_amount || 0}">
+                    ${t.template_name} - ${t.value_amount ? `KES ${t.value_amount}` : `${t.percentage_value}%`}
+                  </option>
+                `).join('')}
+              </select>
+            </div>
+            
+            <div id="issueTemplatePreview" class="hidden preview-card"></div>
+            
+            <div id="issuePurchaseContainer" class="hidden form-group">
+              <label class="form-label"><i class="fas fa-shopping-cart"></i>Purchase Amount (KES) <span class="required">*</span></label>
+              <input type="number" class="form-input" id="issuePurchaseAmount" min="0" step="0.01">
+            </div>
+            
+            <div class="search-section">
+              <div class="form-group">
+                <label class="form-label"><i class="fas fa-user-search"></i>Search Beneficiary <span class="required">*</span></label>
+                <div style="position: relative;">
+                  <input type="text" class="form-input" id="issueSearch" placeholder="Type name or email...">
+                  <div class="search-results" id="issueSearchResults"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div id="issueSelectedCard" class="hidden selected-card"></div>
+            
+            <div class="form-group">
+              <label class="form-label"><i class="fas fa-calendar-alt"></i>Expiry (optional)</label>
+              <input type="date" class="form-input" id="issueExpiry">
+            </div>
+            
+            <button class="btn btn-success btn-block" id="issueSubmitBtn">
+              <i class="fas fa-paper-plane"></i> Issue Voucher
+            </button>
+            
+            <div id="issueResult" class="hidden result-summary"></div>
+          </div>
+        `;
+        
+        // Attach event listeners
+        document.getElementById('issueTemplate').addEventListener('change', handleTemplateChange);
+        document.getElementById('issueSearch').addEventListener('input', handleSearch);
+        document.getElementById('issueSubmitBtn').addEventListener('click', issueVoucher);
+        
+        // Close search on outside click
+        document.addEventListener('click', function(e) {
+          if (!e.target.closest('#issueSearch') && !e.target.closest('#issueSearchResults')) {
+            document.getElementById('issueSearchResults').classList.remove('show');
+          }
+        });
+        
+      } catch (err) {
+        showToast('Failed to load issue data', true);
+        container.innerHTML = '<div class="card">Error loading form</div>';
+      }
+    }
+
+    function handleTemplateChange(e) {
+      const select = e.target;
+      const opt = select.options[select.selectedIndex];
+      
+      if (!select.value) {
+        document.getElementById('issueTemplatePreview').classList.add('hidden');
+        document.getElementById('issuePurchaseContainer').classList.add('hidden');
+        selectedTemplate = null;
+        return;
+      }
+      
+      selectedTemplate = {
+        id: select.value,
+        type: opt.dataset.type,
+        value: opt.dataset.value,
+        min: parseFloat(opt.dataset.min)
+      };
+      
+      const preview = document.getElementById('issueTemplatePreview');
+      preview.innerHTML = `
+        <div class="preview-title">Template Preview</div>
+        <div><strong>${opt.text.split(' - ')[0]}</strong> · ${opt.dataset.type}</div>
+        <div>Value: ${opt.dataset.type === 'fixed_amount' ? `KES ${opt.dataset.value}` : `${opt.dataset.value}%`}</div>
+        ${opt.dataset.min > 0 ? `<div>Min purchase: KES ${opt.dataset.min}</div>` : ''}
+      `;
+      preview.classList.remove('hidden');
+      
+      if (opt.dataset.type === 'percentage') {
+        document.getElementById('issuePurchaseContainer').classList.remove('hidden');
+      } else {
+        document.getElementById('issuePurchaseContainer').classList.add('hidden');
+      }
+    }
+
+    function handleSearch(e) {
+      const query = e.target.value.toLowerCase().trim();
+      const results = document.getElementById('issueSearchResults');
+      
+      if (query.length < 2) {
+        results.classList.remove('show');
+        return;
+      }
+      
+      const filtered = issueUsers.filter(u => {
+        const name = `${u.first_name || ''} ${u.last_name || ''}`.toLowerCase();
+        return name.includes(query) || (u.email || '').toLowerCase().includes(query);
+      }).slice(0, 5);
+      
+      if (filtered.length) {
+        results.innerHTML = filtered.map(u => {
+          const name = `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Unknown';
+          const initials = (u.first_name?.[0] || u.last_name?.[0] || 'U').toUpperCase();
+          return `
+            <div class="search-item" onclick="selectBeneficiary('${u.id}', '${name.replace(/'/g, "\\'")}', '${u.email || ''}')">
+              <div style="display:flex; align-items:center; gap:0.75rem;">
+                <div style="width:32px; height:32px; background:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white;">${initials}</div>
+                <div>
+                  <div style="font-weight:500;">${name}</div>
+                  <div style="font-size:0.75rem; color:var(--gray-500);">${u.email || ''}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+        results.classList.add('show');
+      } else {
+        results.innerHTML = '<div class="search-item text-center">No users found</div>';
+        results.classList.add('show');
+      }
+    }
+
+    window.selectBeneficiary = (id, name, email) => {
+      selectedBeneficiary = { id, name, email };
+      
+      const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'U';
+      const card = document.getElementById('issueSelectedCard');
+      card.innerHTML = `
+        <div class="selected-info">
+          <div class="selected-avatar">${initials}</div>
+          <div>
+            <div class="selected-details">${name}</div>
+            <div class="selected-sub">${email || ''}</div>
+          </div>
+        </div>
+        <button class="clear-btn" onclick="clearBeneficiary()"><i class="fas fa-times-circle"></i></button>
+      `;
+      card.classList.remove('hidden');
+      
+      document.getElementById('issueSearchResults').classList.remove('show');
+      document.getElementById('issueSearch').value = '';
+    };
+
+    window.clearBeneficiary = () => {
+      selectedBeneficiary = null;
+      document.getElementById('issueSelectedCard').classList.add('hidden');
+    };
+
+    async function issueVoucher() {
+      if (!selectedTemplate) {
+        showToast('Please select a template', true);
+        return;
+      }
+      
+      if (!selectedBeneficiary) {
+        showToast('Please select a beneficiary', true);
+        return;
+      }
+      
+      const btn = document.getElementById('issueSubmitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Issuing...';
+      
+      try {
+        const data = {
+          voucher_template_id: selectedTemplate.id,
+          tenant_id: currentUser.tenant_id,
+          beneficiary_name: selectedBeneficiary.name,
+          beneficiary_email: selectedBeneficiary.email || null,
+          expires_at: document.getElementById('issueExpiry').value || null
+        };
+        
+        if (selectedTemplate.type === 'fixed_amount') {
+          data.original_value = parseFloat(selectedTemplate.value);
+        } else {
+          const amount = parseFloat(document.getElementById('issuePurchaseAmount').value);
+          if (!amount || amount < selectedTemplate.min) {
+            showToast(`Minimum purchase KES ${selectedTemplate.min} required`, true);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Issue Voucher';
+            return;
+          }
+          data.original_value = (amount * parseFloat(selectedTemplate.value)) / 100;
+        }
+        
+        const res = await apiCall('/vouchers', { method: 'POST', body: JSON.stringify(data) });
+        const result = res.data || res;
+        const resultDiv = document.getElementById('issueResult');
+        resultDiv.className = 'result-summary success';
+        resultDiv.innerHTML = `
+          <strong>Voucher issued successfully!</strong><br>
+          Code: ${result.code || result.id}
+        `;
+        resultDiv.classList.remove('hidden');
+        
+        // Reset form
+        document.getElementById('issueTemplate').value = '';
+        document.getElementById('issueTemplatePreview').classList.add('hidden');
+        document.getElementById('issuePurchaseContainer').classList.add('hidden');
+        document.getElementById('issueExpiry').value = '';
+        document.getElementById('issuePurchaseAmount').value = '';
+        clearBeneficiary();
+        selectedTemplate = null;
+        
+        setTimeout(() => resultDiv.classList.add('hidden'), 5000);
+        
+      } catch (err) {
+        showToast(err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Issue Voucher';
+      }
+    }
+
+    // ===== VOUCHERS SECTION =====
+    async function loadVouchersSection(container) {
+      container.innerHTML = `
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Vouchers</h2>
+            <div class="filter-bar">
+              <select class="form-select" id="voucherStatus">
+                <option value="">All</option>
+                <option value="active">Active</option>
+                <option value="redeemed">Redeemed</option>
+                <option value="expired">Expired</option>
+              </select>
+              <input type="text" class="form-input" id="voucherSearch" placeholder="Search...">
+              <button class="btn btn-primary" onclick="loadVouchersList()">Search</button>
+            </div>
+          </div>
+          <div id="vouchersList">Loading...</div>
+        </div>
+      `;
+      
+      await loadVouchersList();
+    }
+
+    window.loadVouchersList = async () => {
+      const list = document.getElementById('vouchersList');
+      list.innerHTML = '<div class="text-center">Loading...</div>';
+      
+      try {
+        const status = document.getElementById('voucherStatus')?.value || '';
+        const search = document.getElementById('voucherSearch')?.value || '';
+        let url = `/vouchers?tenant_id=${currentUser.tenant_id}`;
+        if (status) url += `&status=${status}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        
+        const data = await apiCall(url);
+        const vouchers = data.data || [];
+        
+        if (vouchers.length) {
+          list.innerHTML = vouchers.map(v => `
+            <div class="list-item">
+              <div class="list-row">
+                <span class="list-title">${v.code}</span>
+                <span class="badge badge-${v.status === 'active' ? 'success' : v.status === 'redeemed' ? 'danger' : 'warning'}">${v.status}</span>
+              </div>
+              <div class="list-sub">Beneficiary: ${v.beneficiary_name || '-'}</div>
+              <div style="display:flex; justify-content:space-between; margin-top:0.5rem;">
+                <span>KES ${v.original_value}</span>
+                <span>Remaining: KES ${v.remaining_value}</span>
+              </div>
+              <div class="list-meta">Expires: ${v.expires_at ? new Date(v.expires_at).toLocaleDateString() : 'Never'}</div>
+            </div>
+          `).join('');
+        } else {
+          list.innerHTML = '<div class="text-center list-item">No vouchers found</div>';
+        }
+      } catch (err) {
+        list.innerHTML = '<div class="text-center list-item">Error loading vouchers</div>';
+        showToast('Failed to load vouchers', true);
+      }
+    };
+
+    // ===== REDEEM SECTION =====
+    async function loadRedeemSection(container) {
+      currentVoucher = null;
+      
+      try {
+        const merchantsData = await apiCall('/merchants');
+        merchants = Array.isArray(merchantsData) ? merchantsData : (merchantsData.data || []);
+        
+        container.innerHTML = `
+          <div class="card">
+            <h2 class="card-title">Redeem Voucher</h2>
+            
+            <div class="form-group">
+              <label class="form-label"><i class="fas fa-qrcode"></i>Voucher Code *</label>
+              <input type="text" class="form-input" id="redeemCode" placeholder="Enter voucher code">
+            </div>
+            
+            <div id="redeemVoucherDetails" class="hidden preview-card"></div>
+            
+            <div class="form-group">
+              <label class="form-label"><i class="fas fa-store"></i>Merchant *</label>
+              <select class="form-select" id="redeemMerchant">
+                <option value="">Select merchant</option>
+                ${merchants.map(m => `<option value="${m.id}">${m.merchant_name || m.name}</option>`).join('')}
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label"><i class="fas fa-money-bill"></i>Amount to Redeem *</label>
+              <input type="number" class="form-input" id="redeemAmount" min="0" step="0.01">
+            </div>
+            
+            <button class="btn btn-success btn-block" id="redeemBtn">
+              <i class="fas fa-check-circle"></i> Redeem
+            </button>
+            
+            <div id="redeemResult" class="hidden result-summary"></div>
+          </div>
+        `;
+        
+        document.getElementById('redeemCode').addEventListener('input', loadVoucherForRedeem);
+        document.getElementById('redeemBtn').addEventListener('click', redeemVoucher);
+        
+      } catch (err) {
+        showToast('Failed to load merchants', true);
+      }
+    }
+
+    async function loadVoucherForRedeem() {
+      const code = document.getElementById('redeemCode').value;
+      if (!code || code.length < 3) return;
+      
+      try {
+        const data = await apiCall(`/vouchers/code/${code}`);
+        currentVoucher = data.data || data;
+        
+        if (currentVoucher.tenant_id !== currentUser.tenant_id) {
+          showToast('Voucher not found in your company', true);
+          document.getElementById('redeemVoucherDetails').classList.add('hidden');
+          return;
+        }
+        
+        const details = document.getElementById('redeemVoucherDetails');
+        details.innerHTML = `
+          <div class="preview-title">Voucher Details</div>
+          <div class="list-row">
+            <span class="list-title">${currentVoucher.code}</span>
+            <span class="badge badge-${currentVoucher.status === 'active' ? 'success' : 'danger'}">${currentVoucher.status}</span>
+          </div>
+          <div>Beneficiary: ${currentVoucher.beneficiary_name || '-'}</div>
+          <div>Value: KES ${currentVoucher.original_value}</div>
+          <div>Remaining: KES ${currentVoucher.remaining_value}</div>
+          <div class="list-meta">Expires: ${currentVoucher.expires_at ? new Date(currentVoucher.expires_at).toLocaleDateString() : 'Never'}</div>
+        `;
+        details.classList.remove('hidden');
+        
+        const amountInput = document.getElementById('redeemAmount');
+        amountInput.max = currentVoucher.remaining_value;
+        amountInput.value = currentVoucher.remaining_value;
+        
+      } catch (err) {
+        showToast('Voucher not found', true);
+        document.getElementById('redeemVoucherDetails').classList.add('hidden');
+      }
+    }
+
+    async function redeemVoucher() {
+      if (!currentVoucher || currentVoucher.status !== 'active') {
+        showToast('Voucher not available', true);
+        return;
+      }
+      
+      const merchantId = document.getElementById('redeemMerchant').value;
+      const amount = parseFloat(document.getElementById('redeemAmount').value);
+      
+      if (!merchantId || !amount) {
+        showToast('Please fill all fields', true);
+        return;
+      }
+      
+      if (amount > currentVoucher.remaining_value) {
+        showToast('Amount exceeds remaining value', true);
+        return;
+      }
+      
+      const btn = document.getElementById('redeemBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redeeming...';
+      
+      try {
+        await apiCall('/redemptions', {
+          method: 'POST',
+          body: JSON.stringify({
+            voucher_id: currentVoucher.id,
+            merchant_id: merchantId,
+            amount_redeemed: amount
+          })
+        });
+        
+        const result = document.getElementById('redeemResult');
+        result.className = 'result-summary success';
+        result.innerHTML = '<strong>Redeemed successfully!</strong>';
+        result.classList.remove('hidden');
+        
+        document.getElementById('redeemCode').value = '';
+        document.getElementById('redeemVoucherDetails').classList.add('hidden');
+        document.getElementById('redeemAmount').value = '';
+        currentVoucher = null;
+        
+        setTimeout(() => result.classList.add('hidden'), 3000);
+        
+      } catch (err) {
+        showToast('Redemption failed', true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> Redeem';
+      }
+    }
+
+    // ===== REDEMPTIONS SECTION =====
+    async function loadRedemptionsSection(container) {
+      container.innerHTML = `
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Redemption History</h2>
+            <div class="filter-bar">
+              <input type="date" class="form-input" id="redemptionFrom" placeholder="From">
+              <input type="date" class="form-input" id="redemptionTo" placeholder="To">
+              <button class="btn btn-primary" onclick="loadRedemptionsList()">Filter</button>
+            </div>
+          </div>
+          <div id="redemptionsList">Loading...</div>
+        </div>
+      `;
+      
+      await loadRedemptionsList();
+    }
+
+    window.loadRedemptionsList = async () => {
+      const list = document.getElementById('redemptionsList');
+      list.innerHTML = '<div class="text-center">Loading...</div>';
+      
+      try {
+        const from = document.getElementById('redemptionFrom')?.value || '';
+        const to = document.getElementById('redemptionTo')?.value || '';
+        let url = '/redemptions';
+        const params = [];
+        if (from) params.push(`date_from=${from}`);
+        if (to) params.push(`date_to=${to}`);
+        if (params.length) url += '?' + params.join('&');
+        
+        const data = await apiCall(url);
+        const redemptions = data.data || [];
+        
+        if (redemptions.length) {
+          list.innerHTML = redemptions.map(r => `
+            <div class="list-item">
+              <div class="list-row">
+                <span class="list-title">${r.voucher_code || r.voucher_id}</span>
+                <span class="badge badge-success">KES ${r.amount_redeemed}</span>
+              </div>
+              <div class="list-sub">${r.beneficiary_name || '-'} · ${r.merchant_name || r.merchant_id}</div>
+              <div class="list-meta">${new Date(r.created_at).toLocaleString()}</div>
+            </div>
+          `).join('');
+        } else {
+          list.innerHTML = '<div class="text-center list-item">No redemptions found</div>';
+        }
+      } catch (err) {
+        list.innerHTML = '<div class="text-center list-item">Error loading redemptions</div>';
+        showToast('Failed to load redemptions', true);
+      }
+    };
+
+    // ===== TEMPLATES SECTION =====
+    async function loadTemplatesSection(container) {
+      container.innerHTML = `
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Voucher Templates</h2>
+            <button class="btn btn-primary btn-sm" onclick="showCreateTemplate()">
+              <i class="fas fa-plus"></i> New
+            </button>
+          </div>
+          
+          <div id="createTemplateForm" class="hidden preview-card">
+            <div class="preview-title">Create Template</div>
+            <div class="form-group">
+              <label class="form-label">Name *</label>
+              <input type="text" class="form-input" id="templateName">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Type *</label>
+              <select class="form-select" id="templateType">
+                <option value="fixed_amount">Fixed Amount</option>
+                <option value="percentage">Percentage</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Value *</label>
+              <input type="number" class="form-input" id="templateValue" step="0.01">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Min Purchase</label>
+              <input type="number" class="form-input" id="templateMinPurchase" step="0.01">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Valid From</label>
+              <input type="date" class="form-input" id="templateValidFrom">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Valid To</label>
+              <input type="date" class="form-input" id="templateValidTo">
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+              <button class="btn btn-primary" onclick="createTemplate()">Create</button>
+              <button class="btn btn-outline" onclick="hideCreateTemplate()">Cancel</button>
+            </div>
+          </div>
+          
+          <div id="templatesList">Loading...</div>
+        </div>
+      `;
+      
+      await loadTemplatesList();
+    }
+
+    window.showCreateTemplate = () => {
+      document.getElementById('createTemplateForm').classList.remove('hidden');
+    };
+
+    window.hideCreateTemplate = () => {
+      document.getElementById('createTemplateForm').classList.add('hidden');
+      ['templateName', 'templateValue', 'templateMinPurchase', 'templateValidFrom', 'templateValidTo'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+    };
+
+    window.createTemplate = async () => {
+      const name = document.getElementById('templateName').value;
+      const type = document.getElementById('templateType').value;
+      const value = parseFloat(document.getElementById('templateValue').value);
+      
+      if (!name || !value) {
+        showToast('Name and value required', true);
+        return;
+      }
+      
+      let validFrom = document.getElementById('templateValidFrom').value;
+      let validTo = document.getElementById('templateValidTo').value;
+      
+      if (!validFrom) {
+        const today = new Date();
+        validFrom = today.toISOString().split('T')[0];
+      }
+      if (!validTo) {
+        const nextYear = new Date();
+        nextYear.setFullYear(nextYear.getFullYear() + 1);
+        validTo = nextYear.toISOString().split('T')[0];
+      }
+      
+      try {
+        const data = {
+          tenant_id: currentUser.tenant_id,
+          template_name: name,
+          voucher_type: type,
+          value_amount: type === 'fixed_amount' ? value : null,
+          percentage_value: type === 'percentage' ? value : null,
+          min_purchase_amount: parseFloat(document.getElementById('templateMinPurchase').value) || 0,
+          valid_from: new Date(validFrom).toISOString(),
+          valid_to: new Date(validTo).toISOString(),
+          is_active: true
+        };
+        
+        await apiCall('/voucher_templates', { method: 'POST', body: JSON.stringify(data) });
+        showToast('Template created');
+        hideCreateTemplate();
+        await loadTemplatesList();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    };
+
+async function loadTemplatesList() {
+  const list = document.getElementById('templatesList');
+  list.innerHTML = '<div class="text-center">Loading...</div>';
+  
+  try {
+    const data = await apiCall(`/voucher_templates?tenant_id=${currentUser.tenant_id}`);
+    const templates = data.data || [];
+    
+    if (templates.length) {
+      list.innerHTML = templates.map(t => `
+        <div class="list-item">
+          <div class="list-row">
+            <span class="list-title">${t.template_name}</span>
+            <span class="badge ${t.is_active ? 'badge-success' : 'badge-danger'}">
+              ${t.is_active ? 'Active' : 'Inactive'}
+            </span>
+          </div>
+          <div class="list-sub">${t.voucher_type}</div>
+          <div>Value: ${t.value_amount ? `KES ${t.value_amount}` : t.percentage_value ? `${t.percentage_value}%` : '-'}</div>
+          ${t.min_purchase_amount ? `<div>Min purchase: KES ${t.min_purchase_amount}</div>` : ''}
+          <div style="margin-top: 0.5rem;">
+            <button class="btn btn-outline btn-sm" onclick="useTemplate('${t.id}')">
+              <i class="fas fa-plus-circle"></i> Use Template
+            </button>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      list.innerHTML = '<div class="text-center list-item">No templates found</div>';
+    }
+  } catch (err) {
+    list.innerHTML = '<div class="text-center list-item">Error loading templates</div>';
+    showToast('Failed to load templates', true);
+  }
+}
+
+// Add the useTemplate function
+window.useTemplate = (id) => {
+  loadSection('issue');
+  // Need to wait for issue section to load before setting template
+  const checkInterval = setInterval(() => {
+    const templateSelect = document.getElementById('issueTemplate');
+    if (templateSelect) {
+      templateSelect.value = id;
+      templateSelect.dispatchEvent(new Event('change'));
+      clearInterval(checkInterval);
+    }
+  }, 100);
+  
+  // Clear after 3 seconds to prevent infinite loop
+  setTimeout(() => clearInterval(checkInterval), 3000);
+};
+// ===== COMPANIES SECTION WITH FULL CRUD =====
+async function loadCompaniesSection(container) {
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Companies</h2>
+        <button class="btn btn-primary btn-sm" onclick="showCreateCompany()">
+          <i class="fas fa-plus"></i> New Company
+        </button>
+      </div>
+      
+      <!-- Create Company Form -->
+      <div id="createCompanyForm" class="hidden preview-card">
+        <div class="preview-title">Create New Company</div>
+        <div class="form-group">
+          <label class="form-label">Company Name *</label>
+          <input type="text" class="form-input" id="companyNewName" placeholder="e.g., ABC Corporation">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Company Type *</label>
+          <select class="form-select" id="companyNewType">
+            <option value="corporate">Corporate</option>
+            <option value="merchant">Merchant</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input type="email" class="form-input" id="companyNewEmail" placeholder="info@company.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input type="text" class="form-input" id="companyNewPhone" placeholder="e.g., 0712345678">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Registration Number</label>
+          <input type="text" class="form-input" id="companyNewReg" placeholder="e.g., REG123456">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tax ID</label>
+          <input type="text" class="form-input" id="companyNewTax" placeholder="e.g., TAX123456">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Address</label>
+          <input type="text" class="form-input" id="companyNewAddress" placeholder="e.g., 100 Business St, City">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Website</label>
+          <input type="url" class="form-input" id="companyNewWebsite" placeholder="https://www.company.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Billing Cycle</label>
+          <select class="form-select" id="companyNewBilling">
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn btn-primary" onclick="createCompany()">Create Company</button>
+          <button class="btn btn-outline" onclick="hideCreateCompany()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Edit Company Modal -->
+      <div id="editCompanyModal" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+        <div style="background: white; border-radius: var(--radius-lg); padding: 1.5rem; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 class="card-title">Edit Company</h3>
+            <button class="close-btn" onclick="closeEditCompanyModal()"><i class="fas fa-times"></i></button>
+          </div>
+          <div id="editCompanyForm"></div>
+        </div>
+      </div>
+
+      <!-- View Company Details Modal -->
+      <div id="viewCompanyModal" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+        <div style="background: white; border-radius: var(--radius-lg); padding: 1.5rem; max-width: 500px; width: 90%;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 class="card-title">Company Details</h3>
+            <button class="close-btn" onclick="closeViewCompanyModal()"><i class="fas fa-times"></i></button>
+          </div>
+          <div id="viewCompanyDetails"></div>
+        </div>
+      </div>
+      
+      <div id="companiesList">Loading...</div>
+    </div>
+  `;
+  
+  await loadCompaniesList();
+}
+
+// ===== CREATE =====
+window.showCreateCompany = () => {
+  document.getElementById('createCompanyForm').classList.remove('hidden');
+};
+
+window.hideCreateCompany = () => {
+  document.getElementById('createCompanyForm').classList.add('hidden');
+  resetCompanyForm();
+};
+
+function resetCompanyForm() {
+  ['companyNewName', 'companyNewEmail', 'companyNewPhone', 'companyNewReg', 
+   'companyNewTax', 'companyNewAddress', 'companyNewWebsite'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const typeSelect = document.getElementById('companyNewType');
+  if (typeSelect) typeSelect.value = 'corporate';
+  const billingSelect = document.getElementById('companyNewBilling');
+  if (billingSelect) billingSelect.value = 'monthly';
+}
+
+window.createCompany = async () => {
+  const name = document.getElementById('companyNewName').value;
+  const type = document.getElementById('companyNewType').value;
+  const email = document.getElementById('companyNewEmail').value;
+  
+  if (!name || !type || !email) {
+    showToast('Name, type and email are required', true);
+    return;
+  }
+  
+  try {
+    const data = {
+      tenant_name: name,
+      tenant_type: type,
+      email: email,
+      phone: document.getElementById('companyNewPhone').value || null,
+      registration_number: document.getElementById('companyNewReg').value || null,
+      tax_id: document.getElementById('companyNewTax').value || null,
+      address: document.getElementById('companyNewAddress').value || null,
+      website: document.getElementById('companyNewWebsite').value || null,
+      billing_cycle: document.getElementById('companyNewBilling').value || 'monthly',
+      status: 'active'
+    };
+    
+    await apiCall('/tenants', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    showToast('Company created successfully');
+    hideCreateCompany();
+    await loadCompaniesList();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+};
+
+// ===== READ (List) =====
+async function loadCompaniesList() {
+  const list = document.getElementById('companiesList');
+  list.innerHTML = '<div class="text-center">Loading...</div>';
+  
+  try {
+    const data = await apiCall('/tenants');
+    const companies = data.data || [];
+    
+    if (companies.length) {
+      list.innerHTML = companies.map(c => `
+        <div class="list-item">
+          <div class="list-row">
+            <span class="list-title">${c.tenant_name || c.name}</span>
+            <span class="badge ${c.status === 'active' ? 'badge-success' : 'badge-danger'}">
+              ${c.status || 'active'}
+            </span>
+          </div>
+          <div class="list-sub">${c.tenant_type || 'corporate'} · ${c.email || '-'}</div>
+          <div class="list-meta">${c.phone || '-'} · ${c.registration_number || 'No reg'}</div>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+            <button class="btn btn-outline btn-sm" onclick="viewCompany('${c.id}')">
+              <i class="fas fa-eye"></i> View
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="editCompany('${c.id}')">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn btn-outline btn-sm" style="color: var(--danger);" onclick="deleteCompany('${c.id}')">
+              <i class="fas fa-trash"></i> Delete
+            </button>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      list.innerHTML = '<div class="text-center list-item">No companies found</div>';
+    }
+  } catch (err) {
+    list.innerHTML = '<div class="text-center list-item">Error loading companies</div>';
+    showToast('Failed to load companies', true);
+  }
+}
+
+// ===== READ (Single) =====
+window.viewCompany = async (id) => {
+  try {
+    const data = await apiCall(`/tenants/${id}`);
+    const company = data.data || data;
+    
+    const details = document.getElementById('viewCompanyDetails');
+    details.innerHTML = `
+      <div style="margin-bottom: 1rem;">
+        <div style="font-weight: 600; margin-bottom: 0.5rem;">${company.tenant_name || company.name}</div>
+        <div class="badge ${company.status === 'active' ? 'badge-success' : 'badge-danger'}" style="margin-bottom: 1rem;">
+          ${company.status || 'active'}
+        </div>
+        
+        <table style="width: 100%;">
+          <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Type:</td><td>${company.tenant_type || '-'}</td></tr>
+          <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Email:</td><td>${company.email || '-'}</td></tr>
+          <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Phone:</td><td>${company.phone || '-'}</td></tr>
+          <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Registration:</td><td>${company.registration_number || '-'}</td></tr>
+          <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Tax ID:</td><td>${company.tax_id || '-'}</td></tr>
+          <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Address:</td><td>${company.address || '-'}</td></tr>
+          <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Website:</td><td>${company.website ? `<a href="${company.website}" target="_blank">${company.website}</a>` : '-'}</td></tr>
+          <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Billing Cycle:</td><td>${company.billing_cycle || 'monthly'}</td></tr>
+          <tr><td style="padding: 0.5rem 0; color: var(--gray-600);">Created:</td><td>${new Date(company.created_at).toLocaleString()}</td></tr>
+        </table>
+      </div>
+    `;
+    
+    document.getElementById('viewCompanyModal').classList.remove('hidden');
+  } catch (err) {
+    showToast('Failed to load company details', true);
+  }
+};
+
+window.closeViewCompanyModal = () => {
+  document.getElementById('viewCompanyModal').classList.add('hidden');
+};
+
+// ===== UPDATE =====
+window.editCompany = async (id) => {
+  try {
+    const data = await apiCall(`/tenants/${id}`);
+    const company = data.data || data;
+    
+    const form = document.getElementById('editCompanyForm');
+    form.innerHTML = `
+      <input type="hidden" id="editCompanyId" value="${company.id}">
+      <div class="form-group">
+        <label class="form-label">Company Name *</label>
+        <input type="text" class="form-input" id="editCompanyName" value="${company.tenant_name || company.name || ''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Company Type *</label>
+        <select class="form-select" id="editCompanyType">
+          <option value="corporate" ${company.tenant_type === 'corporate' ? 'selected' : ''}>Corporate</option>
+          <option value="merchant" ${company.tenant_type === 'merchant' ? 'selected' : ''}>Merchant</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email *</label>
+        <input type="email" class="form-input" id="editCompanyEmail" value="${company.email || ''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone</label>
+        <input type="text" class="form-input" id="editCompanyPhone" value="${company.phone || ''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Registration Number</label>
+        <input type="text" class="form-input" id="editCompanyReg" value="${company.registration_number || ''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tax ID</label>
+        <input type="text" class="form-input" id="editCompanyTax" value="${company.tax_id || ''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <input type="text" class="form-input" id="editCompanyAddress" value="${company.address || ''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Website</label>
+        <input type="url" class="form-input" id="editCompanyWebsite" value="${company.website || ''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Billing Cycle</label>
+        <select class="form-select" id="editCompanyBilling">
+          <option value="monthly" ${company.billing_cycle === 'monthly' ? 'selected' : ''}>Monthly</option>
+          <option value="quarterly" ${company.billing_cycle === 'quarterly' ? 'selected' : ''}>Quarterly</option>
+          <option value="yearly" ${company.billing_cycle === 'yearly' ? 'selected' : ''}>Yearly</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="editCompanyStatus">
+          <option value="active" ${company.status === 'active' ? 'selected' : ''}>Active</option>
+          <option value="inactive" ${company.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+          <option value="suspended" ${company.status === 'suspended' ? 'selected' : ''}>Suspended</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:0.5rem; margin-top: 1rem;">
+        <button class="btn btn-primary" onclick="updateCompany()">Update Company</button>
+        <button class="btn btn-outline" onclick="closeEditCompanyModal()">Cancel</button>
+      </div>
+    `;
+    
+    document.getElementById('editCompanyModal').classList.remove('hidden');
+  } catch (err) {
+    showToast('Failed to load company for editing', true);
+  }
+};
+
+window.closeEditCompanyModal = () => {
+  document.getElementById('editCompanyModal').classList.add('hidden');
+};
+
+window.updateCompany = async () => {
+  const id = document.getElementById('editCompanyId').value;
+  const name = document.getElementById('editCompanyName').value;
+  const type = document.getElementById('editCompanyType').value;
+  const email = document.getElementById('editCompanyEmail').value;
+  
+  if (!name || !type || !email) {
+    showToast('Name, type and email are required', true);
+    return;
+  }
+  
+  try {
+    const data = {
+      tenant_name: name,
+      tenant_type: type,
+      email: email,
+      phone: document.getElementById('editCompanyPhone').value || null,
+      registration_number: document.getElementById('editCompanyReg').value || null,
+      tax_id: document.getElementById('editCompanyTax').value || null,
+      address: document.getElementById('editCompanyAddress').value || null,
+      website: document.getElementById('editCompanyWebsite').value || null,
+      billing_cycle: document.getElementById('editCompanyBilling').value || 'monthly',
+      status: document.getElementById('editCompanyStatus').value
+    };
+    
+    await apiCall(`/tenants/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+    showToast('Company updated successfully');
+    closeEditCompanyModal();
+    await loadCompaniesList();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+};
+
+// ===== DELETE =====
+window.deleteCompany = async (id) => {
+  if (!confirm('Are you sure you want to delete this company? This action cannot be undone.')) {
+    return;
+  }
+  
+  try {
+    await apiCall(`/tenants/${id}`, {
+      method: 'DELETE'
+    });
+    showToast('Company deleted successfully');
+    await loadCompaniesList();
+  } catch (err) {
+    showToast('Failed to delete company', true);
+  }
+};
+    // ===== USERS SECTION =====
+    async function loadUsersSection(container) {
+      container.innerHTML = `
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Users</h2>
+            <button class="btn btn-primary btn-sm" onclick="showCreateUser()">
+              <i class="fas fa-plus"></i> New
+            </button>
+          </div>
+          
+          <div id="createUserForm" class="hidden preview-card">
+            <div class="preview-title">Create User</div>
+            <div class="form-group">
+              <label class="form-label">First Name</label>
+              <input type="text" class="form-input" id="userFirstName">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name</label>
+              <input type="text" class="form-input" id="userLastName">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email *</label>
+              <input type="email" class="form-input" id="userEmail">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone</label>
+              <input type="text" class="form-input" id="userPhone">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Role</label>
+              <select class="form-select" id="userRole">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+              <button class="btn btn-primary" onclick="createUser()">Create</button>
+              <button class="btn btn-outline" onclick="hideCreateUser()">Cancel</button>
+            </div>
+          </div>
+          
+          <div id="usersList">Loading...</div>
+        </div>
+      `;
+      
+      await loadUsersList();
+    }
+
+    window.showCreateUser = () => {
+      document.getElementById('createUserForm').classList.remove('hidden');
+    };
+
+    window.hideCreateUser = () => {
+      document.getElementById('createUserForm').classList.add('hidden');
+      ['userFirstName', 'userLastName', 'userEmail', 'userPhone'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+    };
+
+    window.createUser = async () => {
+      const firstName = document.getElementById('userFirstName').value;
+      const lastName = document.getElementById('userLastName').value;
+      const email = document.getElementById('userEmail').value;
+      
+      if (!email) {
+        showToast('Email required', true);
+        return;
+      }
+      
+      try {
+        await apiCall('/users', {
+          method: 'POST',
+          body: JSON.stringify({
+            tenant_id: currentUser.tenant_id,
+            first_name: firstName,
+            last_name: lastName,
+            email: email,
+            phone: document.getElementById('userPhone').value,
+            role: document.getElementById('userRole').value,
+            status: 'active'
+          })
+        });
+        showToast('User created');
+        hideCreateUser();
+        await loadUsersList();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    };
+
+    async function loadUsersList() {
+      const list = document.getElementById('usersList');
+      list.innerHTML = '<div class="text-center">Loading...</div>';
+      
+      try {
+        const data = await apiCall('/users');
+        const users = data.data || [];
+        
+        if (users.length) {
+          list.innerHTML = users.map(u => `
+            <div class="list-item">
+              <div class="list-title">${u.first_name || ''} ${u.last_name || ''}</div>
+              <div class="list-sub">${u.email}</div>
+              <div class="list-meta">${u.phone || '-'} · ${u.role || 'user'}</div>
+            </div>
+          `).join('');
+        } else {
+          list.innerHTML = '<div class="text-center list-item">No users found</div>';
+        }
+      } catch (err) {
+        list.innerHTML = '<div class="text-center list-item">Error loading users</div>';
+        showToast('Failed to load users', true);
+      }
+    }
+
+    // ===== BULK USERS SECTION =====
+    async function loadBulkUsersSection(container) {
+      importFileData = null;
+      
+      container.innerHTML = `
+        <div class="card">
+          <h2 class="card-title">Bulk Import Users</h2>
+          
+          <div class="form-group">
+            <button class="btn btn-outline btn-sm" onclick="downloadUserTemplate()">
+              <i class="fas fa-download"></i> Download Template
+            </button>
+          </div>
+          
+          <div class="upload-area" onclick="document.getElementById('userFile').click()" ondragover="event.preventDefault()" ondrop="handleUserFileDrop(event)">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Drag & drop CSV or click to browse</p>
+            <div class="upload-hint">Required: first_name, last_name, email</div>
+            <input type="file" id="userFile" style="display:none;" accept=".csv" onchange="handleUserFileSelect(this)">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Default Role</label>
+            <select class="form-select" id="bulkUserRole">
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          
+          <button class="btn btn-primary btn-block" onclick="processUserImport()">Import Users</button>
+          
+          <div id="userImportPreview" class="hidden preview-card"></div>
+          <div id="userImportResult" class="hidden result-summary"></div>
+        </div>
+      `;
+    }
+
+    window.downloadUserTemplate = () => {
+      const csv = 'first_name,last_name,email,phone,role\nJohn,Doe,john@example.com,0712345678,user\nJane,Smith,jane@example.com,0798765432,admin';
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'users_template.csv';
+      link.click();
+    };
+
+    window.handleUserFileDrop = (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file) processUserFile(file);
+    };
+
+    window.handleUserFileSelect = (input) => {
+      const file = input.files[0];
+      if (file) processUserFile(file);
+    };
+
+    function processUserFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target.result;
+        const lines = content.split('\n').filter(l => l.trim());
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        
+        const required = ['first_name', 'last_name', 'email'];
+        const missing = required.filter(r => !headers.includes(r));
+        if (missing.length) {
+          showToast(`Missing columns: ${missing.join(', ')}`, true);
+          return;
+        }
+        
+        const data = lines.slice(1).map(l => {
+          const values = l.split(',').map(v => v.trim());
+          return headers.reduce((obj, h, i) => ({ ...obj, [h]: values[i] }), {});
+        }).filter(row => row.first_name && row.last_name && row.email);
+        
+        const preview = document.getElementById('userImportPreview');
+        preview.innerHTML = `
+          <div class="preview-title">Preview (first 5 rows)</div>
+          ${data.slice(0, 5).map(row => `
+            <div>${row.first_name} ${row.last_name} - ${row.email}</div>
+          `).join('')}
+          <div class="list-meta">Total: ${data.length} users</div>
+        `;
+        preview.classList.remove('hidden');
+        
+        importFileData = { type: 'users', data };
+        showToast(`Loaded ${data.length} users`);
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    window.processUserImport = async () => {
+      if (!importFileData || importFileData.type !== 'users') {
+        showToast('No user file loaded', true);
+        return;
+      }
+      
+      let success = 0, failed = 0;
+      const errors = [];
+      
+      for (const row of importFileData.data) {
+        try {
+          const userData = {
+            tenant_id: currentUser.tenant_id,
+            first_name: row.first_name,
+            last_name: row.last_name,
+            email: row.email,
+            phone: row.phone || '',
+            role: row.role || document.getElementById('bulkUserRole').value,
+            status: 'active'
+          };
+          await apiCall('/users', { method: 'POST', body: JSON.stringify(userData) });
+          success++;
+        } catch (err) {
+          failed++;
+          errors.push(err.message);
+        }
+      }
+      
+      const result = document.getElementById('userImportResult');
+      result.className = `result-summary ${failed ? 'warning' : 'success'}`;
+      result.innerHTML = `<strong>Import Complete</strong><br>Success: ${success}<br>Failed: ${failed}`;
+      if (errors.length) result.innerHTML += `<br><small>${errors.slice(0, 3).join('<br>')}</small>`;
+      result.classList.remove('hidden');
+      
+      if (success > 0) loadUsersList();
+    };
+
+    // ===== BULK VOUCHERS SECTION =====
+    async function loadBulkVouchersSection(container) {
+      importFileData = null;
+      
+      try {
+        const data = await apiCall(`/voucher_templates?tenant_id=${currentUser.tenant_id}`);
+        const templates = data.data || [];
+        const fixedTemplates = templates.filter(t => t.voucher_type === 'fixed_amount');
+        
+        container.innerHTML = `
+          <div class="card">
+            <h2 class="card-title">Bulk Create Vouchers</h2>
+            
+            <div class="form-group">
+              <button class="btn btn-outline btn-sm" onclick="downloadVoucherTemplate()">
+                <i class="fas fa-download"></i> Download Template
+              </button>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Voucher Template *</label>
+              <select class="form-select" id="bulkVoucherTemplate">
+                <option value="">Select template</option>
+                ${fixedTemplates.map(t => `<option value="${t.id}">${t.template_name} - KES ${t.value_amount}</option>`).join('')}
+              </select>
+            </div>
+            
+            <div class="upload-area" onclick="document.getElementById('voucherFile').click()" ondragover="event.preventDefault()" ondrop="handleVoucherFileDrop(event)">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Drag & drop CSV or click to browse</p>
+              <div class="upload-hint">Required: name (beneficiary), optional: email, phone, expiry_date</div>
+              <input type="file" id="voucherFile" style="display:none;" accept=".csv" onchange="handleVoucherFileSelect(this)">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Default Expiry (days)</label>
+              <input type="number" class="form-input" id="bulkVoucherExpiry" value="30" min="1">
+            </div>
+            
+            <button class="btn btn-primary btn-block" onclick="processVoucherBulk()">Create Vouchers</button>
+            
+            <div id="voucherImportPreview" class="hidden preview-card"></div>
+            <div id="voucherBulkResult" class="hidden result-summary"></div>
+          </div>
+        `;
+      } catch (err) {
+        showToast('Failed to load templates', true);
+      }
+    }
+
+    window.downloadVoucherTemplate = () => {
+      const csv = 'name,email,phone,expiry_date\nJohn Doe,john@example.com,0712345678,2025-12-31\nJane Smith,jane@example.com,0798765432,';
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'voucher_template.csv';
+      link.click();
+    };
+
+    window.handleVoucherFileDrop = (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file) processVoucherFile(file);
+    };
+
+    window.handleVoucherFileSelect = (input) => {
+      const file = input.files[0];
+      if (file) processVoucherFile(file);
+    };
+
+    function processVoucherFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target.result;
+        const lines = content.split('\n').filter(l => l.trim());
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        
+        if (!headers.includes('name')) {
+          showToast('Missing required column: name', true);
+          return;
+        }
+        
+        const data = lines.slice(1).map(l => {
+          const values = l.split(',').map(v => v.trim());
+          return headers.reduce((obj, h, i) => ({ ...obj, [h]: values[i] }), {});
+        }).filter(row => row.name);
+        
+        const preview = document.getElementById('voucherImportPreview');
+        preview.innerHTML = `
+          <div class="preview-title">Preview (first 5 rows)</div>
+          ${data.slice(0, 5).map(row => `
+            <div>${row.name} - ${row.email || 'No email'}</div>
+          `).join('')}
+          <div class="list-meta">Total: ${data.length} beneficiaries</div>
+        `;
+        preview.classList.remove('hidden');
+        
+        importFileData = { type: 'vouchers', data };
+        showToast(`Loaded ${data.length} beneficiaries`);
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    window.processVoucherBulk = async () => {
+      const templateId = document.getElementById('bulkVoucherTemplate').value;
+      if (!templateId) {
+        showToast('Select a template', true);
+        return;
+      }
+      
+      if (!importFileData || importFileData.type !== 'vouchers') {
+        showToast('No file loaded', true);
+        return;
+      }
+      
+      // Get template details
+      let template;
+      try {
+        const templateData = await apiCall(`/voucher_templates/${templateId}`);
+        template = templateData.data || templateData;
+      } catch (err) {
+        showToast('Failed to load template details', true);
+        return;
+      }
+      
+      const defaultExpiry = parseInt(document.getElementById('bulkVoucherExpiry').value) || 30;
+      let success = 0, failed = 0;
+      const errors = [];
+      const created = [];
+      
+      for (const row of importFileData.data) {
+        try {
+          let expiry = row.expiry_date;
+          if (!expiry && defaultExpiry) {
+            const d = new Date();
+            d.setDate(d.getDate() + defaultExpiry);
+            expiry = d.toISOString().split('T')[0];
+          }
+          
+          const voucherData = {
+            voucher_template_id: templateId,
+            tenant_id: currentUser.tenant_id,
+            beneficiary_name: row.name,
+            beneficiary_email: row.email || '',
+            beneficiary_phone: row.phone || '',
+            valid_from: new Date().toISOString(),
+            expires_at: expiry || null,
+            original_value: parseFloat(template.value_amount)
+          };
+          
+          const result = await apiCall('/vouchers', { method: 'POST', body: JSON.stringify(voucherData) });
+          success++;
+          created.push({ name: row.name, code: result.data.code || result.id });
+        } catch (err) {
+          failed++;
+          errors.push(`${row.name}: ${err.message}`);
+        }
+      }
+      
+      const result = document.getElementById('voucherBulkResult');
+      result.className = `result-summary ${failed ? 'warning' : 'success'}`;
+      result.innerHTML = `
+        <strong>Bulk Creation Complete</strong><br>
+        Success: ${success}<br>
+        Failed: ${failed}<br>
+        ${created.slice(0, 3).map(v => `${v.name}: ${v.code}`).join('<br>')}
+      `;
+      result.classList.remove('hidden');
+      
+      if (success > 0) loadVouchersList();
+    };
+
+    // ===== ANALYTICS SECTION =====
+    async function loadAnalyticsSection(container) {
+      container.innerHTML = `
+        <div class="card">
+          <h2 class="card-title">Analytics</h2>
+          <div style="height: 300px;">
+            <canvas id="analyticsChart"></canvas>
+          </div>
+        </div>
+      `;
+      
+      try {
+        const data = await apiCall('/redemptions?days=30');
+        const redemptions = data.data || [];
+        
+        const daily = {};
+        redemptions.forEach(r => {
+          const d = new Date(r.created_at).toLocaleDateString();
+          daily[d] = (daily[d] || 0) + 1;
+        });
+        
+        const ctx = document.getElementById('analyticsChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: Object.keys(daily).slice(-7),
+            datasets: [{
+              label: 'Daily Redemptions',
+              data: Object.values(daily).slice(-7),
+              borderColor: '#2563eb',
+              tension: 0.4
+            }]
+          }
+        });
+      } catch (err) {
+        showToast('Failed to load analytics', true);
+      }
+    }
+
+    // ===== QR GENERATOR SECTION =====
+    async function loadQRSection(container) {
+      container.innerHTML = `
+        <div class="card">
+          <h2 class="card-title">QR Code Generator</h2>
+          
+          <div class="form-group">
+            <label class="form-label">Voucher Code</label>
+            <input type="text" class="form-input" id="qrCode" placeholder="Enter voucher code">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Size</label>
+            <select class="form-select" id="qrSize">
+              <option value="150">Small</option>
+              <option value="200" selected>Medium</option>
+              <option value="300">Large</option>
+            </select>
+          </div>
+          
+          <button class="btn btn-primary btn-block" onclick="generateQR()">
+            <i class="fas fa-qrcode"></i> Generate
+          </button>
+          
+          <div id="qrResult" style="text-align: center; margin-top: 1rem;"></div>
+        </div>
+      `;
+    }
+
+    window.generateQR = () => {
+      const code = document.getElementById('qrCode').value;
+      const size = parseInt(document.getElementById('qrSize').value);
+      
+      if (!code) {
+        showToast('Enter a voucher code', true);
+        return;
+      }
+      
+      QRCode.toCanvas(document.createElement('canvas'), code, { width: size }, (err, canvas) => {
+        if (err) {
+          showToast('Failed to generate QR', true);
+          return;
+        }
+        const result = document.getElementById('qrResult');
+        result.innerHTML = '';
+        result.appendChild(canvas);
+      });
+    };
+
+ // ===== LOGOUT WITH CONFIRMATION =====
+window.logout = () => {
+  // Close any open dropdowns
+  document.getElementById('mobileDropdown')?.classList.remove('show');
+  
+  // Create confirmation modal
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  `;
+  
+  modal.innerHTML = `
+    <div style="background: white; border-radius: var(--radius-lg); padding: 1.5rem; max-width: 400px; width: 90%;">
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <div style="width: 60px; height: 60px; background: var(--danger); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; margin: 0 auto 1rem;">
+          <i class="fas fa-sign-out-alt"></i>
+        </div>
+        <h3 class="card-title" style="font-size: 1.25rem;">Confirm Logout</h3>
+        <p style="color: var(--gray-600); margin-top: 0.5rem;">Are you sure you want to logout?</p>
+      </div>
+      <div style="display: flex; gap: 0.75rem;">
+        <button class="btn btn-outline" style="flex: 1;" onclick="this.closest('.modal-overlay').remove()">
+          Cancel
+        </button>
+        <button class="btn btn-danger" style="flex: 1;" onclick="confirmLogout()">
+          Logout
+        </button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Close modal when clicking outside
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+};
+
+// ===== CONFIRM LOGOUT =====
+window.confirmLogout = () => {
+  // Remove the modal
+  document.querySelector('.modal-overlay')?.remove();
+  
+  // Show toast
+  showToast('Logging out...');
+  
+  // Clear token and redirect
+  setTimeout(() => {
+    localStorage.removeItem('token');
+    window.location.href = '/';
+  }, 500);
+};
+    // ===== INITIAL LOAD =====
+    loadSection('dashboard');
+  </script>
+</body>
+</html>

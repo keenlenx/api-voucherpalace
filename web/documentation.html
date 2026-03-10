@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoucherPalace · System Documentation</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    :root {
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+    }
+
+    body {
+      background: var(--gray-100);
+      min-height: 100vh;
+    }
+
+    .docs-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .docs-sidebar {
+      width: 300px;
+      background: white;
+      border-right: 1px solid var(--gray-200);
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      overflow-y: auto;
+      padding: 2rem 1rem;
+    }
+
+    .docs-sidebar .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      padding: 0 1rem;
+    }
+
+    .docs-sidebar .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--primary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.25rem;
+    }
+
+    .docs-sidebar .logo-text {
+      font-weight: 600;
+      font-size: 1.25rem;
+      color: var(--gray-900);
+    }
+
+    .search-box {
+      position: relative;
+      margin: 1rem 0 2rem;
+      padding: 0 1rem;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 1.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+    }
+
+    .nav-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .nav-section-title {
+      padding: 0.5rem 1rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray-600);
+      font-weight: 600;
+    }
+
+    .nav-item {
+      display: block;
+      padding: 0.625rem 1rem;
+      margin: 0.125rem 0;
+      color: var(--gray-700);
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+
+    .nav-item:hover {
+      background: var(--gray-100);
+      color: var(--gray-900);
+    }
+
+    .nav-item.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .nav-item i {
+      width: 20px;
+      margin-right: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    /* Main Content */
+    .docs-content {
+      flex: 1;
+      margin-left: 300px;
+      padding: 2rem;
+      max-width: 900px;
+    }
+
+    .docs-header {
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .docs-header h1 {
+      font-size: 2rem;
+      color: var(--gray-900);
+      margin-bottom: 0.5rem;
+    }
+
+    .docs-header p {
+      color: var(--gray-600);
+      font-size: 1.1rem;
+    }
+
+    .docs-section {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      scroll-margin-top: 2rem;
+    }
+
+    .docs-section h2 {
+      font-size: 1.5rem;
+      color: var(--gray-900);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--gray-200);
+    }
+
+    .docs-section h3 {
+      font-size: 1.25rem;
+      color: var(--gray-800);
+      margin: 1.5rem 0 1rem;
+    }
+
+    .docs-section h4 {
+      font-size: 1rem;
+      color: var(--gray-700);
+      margin: 1rem 0 0.5rem;
+    }
+
+    .docs-section p {
+      color: var(--gray-700);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    .code-block {
+      background: var(--gray-900);
+      color: #e5e7eb;
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+
+    .code-block code {
+      color: #22c55e;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+
+    .badge.primary { background: #dbeafe; color: #1e40af; }
+    .badge.success { background: #dcfce7; color: #166534; }
+    .badge.warning { background: #fef3c7; color: #92400e; }
+    .badge.danger { background: #fee2e2; color: #991b1b; }
+
+    .endpoint {
+      background: var(--gray-50);
+      border-left: 4px solid var(--primary);
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .endpoint .method {
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .endpoint .url {
+      font-family: monospace;
+      background: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+
+    .table th {
+      text-align: left;
+      padding: 0.75rem;
+      background: var(--gray-100);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+
+    .table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--gray-200);
+      color: var(--gray-600);
+    }
+
+    .props-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+    }
+
+    .props-table th {
+      background: var(--gray-800);
+      color: white;
+      padding: 0.5rem;
+      text-align: left;
+    }
+
+    .props-table td {
+      padding: 0.5rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .props-table tr:hover {
+      background: var(--gray-50);
+    }
+
+    .highlight {
+      background: #fef3c7;
+      padding: 0.125rem 0.25rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .note {
+      background: #eff6ff;
+      border-left: 4px solid var(--primary);
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .warning-note {
+      background: #fef3c7;
+      border-left: 4px solid var(--warning);
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .search-highlight {
+      background-color: #fef08a;
+      padding: 0.125rem 0;
+      border-radius: 2px;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 3rem;
+      color: var(--gray-500);
+    }
+
+    @media (max-width: 768px) {
+      .docs-sidebar {
+        transform: translateX(-100%);
+        z-index: 100;
+      }
+      .docs-sidebar.open {
+        transform: translateX(0);
+      }
+      .docs-content {
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <div class="docs-sidebar" id="docsSidebar">
+      <div class="logo">
+        <div class="logo-icon"><i class="fas fa-ticket-alt"></i></div>
+        <span class="logo-text">VoucherPalace</span>
+      </div>
+
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="docSearch" placeholder="Search documentation..." oninput="searchDocs()">
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <a href="#overview" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-rocket"></i> Overview
+        </a>
+        <a href="#architecture" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-sitemap"></i> Architecture
+        </a>
+        <a href="#setup" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-cog"></i> Setup & Configuration
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Core Features</div>
+        <a href="#dashboard" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-chart-pie"></i> Dashboard
+        </a>
+        <a href="#vouchers" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-ticket-alt"></i> Vouchers
+        </a>
+        <a href="#templates" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-file-alt"></i> Templates
+        </a>
+        <a href="#companies" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-building"></i> Companies
+        </a>
+        <a href="#users" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-users"></i> Users
+        </a>
+        <a href="#redemptions" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-check-circle"></i> Redemptions
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Advanced Features</div>
+        <a href="#bulk-operations" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-layer-group"></i> Bulk Operations
+        </a>
+        <a href="#analytics" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-chart-line"></i> Analytics
+        </a>
+        <a href="#reports" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-file-pdf"></i> Reports
+        </a>
+        <a href="#qr-generator" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-qrcode"></i> QR Generator
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">API Reference</div>
+        <a href="#api-endpoints" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-code"></i> Endpoints
+        </a>
+        <a href="#api-models" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-database"></i> Data Models
+        </a>
+        <a href="#authentication" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-lock"></i> Authentication
+        </a>
+        <a href="#error-handling" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-exclamation-triangle"></i> Error Handling
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Development</div>
+        <a href="#file-structure" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-folder-tree"></i> File Structure
+        </a>
+        <a href="#state-management" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-brain"></i> State Management
+        </a>
+        <a href="#search-system" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-search"></i> Search System
+        </a>
+        <a href="#session" class="nav-item" onclick="setActive(this)">
+          <i class="fas fa-clock"></i> Session Management
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="docs-content" id="docsContent">
+      <div class="docs-header">
+        <h1>VoucherPalace System Documentation</h1>
+        <p>Complete reference for the voucher management platform</p>
+      </div>
+
+      <!-- Overview Section -->
+      <section id="overview" class="docs-section">
+        <h2>📋 Overview</h2>
+        <p>The VoucherPalace platform is a comprehensive voucher management system built with:</p>
+        <ul style="margin-left: 1.5rem; color: var(--gray-700); line-height: 1.8;">
+          <li><strong>Backend:</strong> Node.js + Express + PostgreSQL (Port 3006)</li>
+          <li><strong>Frontend:</strong> Vanilla JavaScript with modular architecture</li>
+          <li><strong>Authentication:</strong> JWT tokens with refresh mechanism</li>
+          <li><strong>Features:</strong> Multi-tenant, template-based vouchers, bulk operations</li>
+        </ul>
+
+        <div class="note">
+          <i class="fas fa-info-circle" style="color: var(--primary); margin-right: 0.5rem;"></i>
+          <strong>Base URL:</strong> <code>http://localhost:3006</code>
+        </div>
+      </section>
+
+      <!-- Architecture Section -->
+      <section id="architecture" class="docs-section">
+        <h2>🏗️ Architecture</h2>
+        <div class="code-block">
+          <pre>
+voucher-platform/
+├── backend/                 # Express API (Port 3006)
+│   ├── controllers/        # Business logic
+│   ├── routes/             # API endpoints
+│   ├── models/             # Database models
+│   └── middleware/         # Auth, validation
+│
+├── frontend/               # Dashboard (This app)
+│   ├── dashboard.html      # Main entry
+│   ├── style.css           # Global styles
+│   ├── config.js           # Configuration
+│   ├── api.js              # API communication
+│   ├── ui.js               # UI utilities
+│   ├── views.js            # View management
+│   ├── issue.js            # Issue voucher logic
+│   └── views/              # HTML templates
+│       ├── dashboard.html
+│       ├── issue.html
+│       ├── redeem.html
+│       └── ...
+          </pre>
+        </div>
+      </section>
+
+      <!-- Setup Section -->
+      <section id="setup" class="docs-section">
+        <h2>⚙️ Setup & Configuration</h2>
+        
+        <h3>Environment Variables</h3>
+        <p>Create a <code>.env</code> file in the backend root:</p>
+        <div class="code-block">
+          <pre>
+PORT=3006
+NODE_ENV=production
+DATABASE_URL=postgresql://username:password@localhost:5432/voucherpalace
+JWT_SECRET=your-super-secret-key
+JWT_EXPIRY=86400
+          </pre>
+        </div>
+
+        <h3>Frontend Configuration (config.js)</h3>
+        <div class="code-block">
+          <pre>
+const CONFIG = {
+  API_BASE: 'http://localhost:3006',
+  SESSION_TIMEOUT: 30 * 60 * 1000,    // 30 minutes
+  SESSION_WARNING: 60 * 1000,          // 1 minute warning
+  DEBOUNCE_DELAY: 300,                 // ms for search
+  DEFAULT_EXPIRY_DAYS: 30
+};</pre>
+        </div>
+      </section>
+
+      <!-- Dashboard Section -->
+      <section id="dashboard" class="docs-section">
+        <h2>📊 Dashboard</h2>
+        
+        <h3>Key Components</h3>
+        <ul style="margin-left: 1.5rem; color: var(--gray-700);">
+          <li><span class="badge primary">Stats Cards</span> Total redemptions, active vouchers, companies, templates</li>
+          <li><span class="badge success">Action Grid</span> Quick actions for Issue, Redeem, Templates, Companies, Users</li>
+          <li><span class="badge warning">Recent Redemptions</span> Last 5 redemptions with details</li>
+        </ul>
+
+        <h3>Data Loading</h3>
+        <div class="code-block">
+          <pre>
+async function loadDashboardData() {
+  // Fetches from:
+  - /voucher-redemptions  # Recent redemptions
+  - /vouchers             # Active vouchers count
+  - /tenants              # Companies count
+  - /voucher_templates    # Templates count
+}</pre>
+        </div>
+      </section>
+
+      <!-- Vouchers Section -->
+      <section id="vouchers" class="docs-section">
+        <h2>🎫 Vouchers</h2>
+
+        <h3>Issue Voucher Flow</h3>
+        <ol style="margin-left: 1.5rem; color: var(--gray-700); line-height: 1.8;">
+          <li>Search/select a <strong>template</strong> (live search)</li>
+          <li>Search/select a <strong>company</strong> (live search)</li>
+          <li>Choose <strong>beneficiary</strong> (current user, recent, or search)</li>
+          <li>Set <strong>expiry date</strong> (quick options: 30/90/365 days)</li>
+          <li>For <strong>percentage vouchers</strong>: Enter expected purchase amount</li>
+        </ol>
+
+        <h3>Voucher Types</h3>
+        <table class="props-table">
+          <thead>
+            <tr><th>Type</th><th>Description</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>fixed_amount</td><td>Fixed value voucher</td><td>KES 1000</td></tr>
+            <tr><td>percentage</td><td>Percentage discount</td><td>20% off (min spend KES 5000)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="endpoint">
+          <span class="method">POST</span> <span class="url">/vouchers</span>
+          <p style="margin-top: 0.5rem;">Create a new voucher</p>
+        </div>
+
+        <div class="endpoint">
+          <span class="method">GET</span> <span class="url">/vouchers/code/{code}</span>
+          <p>Get voucher by code (used in redemption)</p>
+        </div>
+      </section>
+
+      <!-- Templates Section -->
+      <section id="templates" class="docs-section">
+        <h2>📄 Templates</h2>
+
+        <h3>Template Properties</h3>
+        <table class="props-table">
+          <thead>
+            <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>tenant_id</td><td>UUID</td><td>Company ID</td></tr>
+            <tr><td>template_name</td><td>string</td><td>Template name</td></tr>
+            <tr><td>voucher_type</td><td>enum</td><td>fixed_amount, percentage</td></tr>
+            <tr><td>value_amount</td><td>decimal</td><td>For fixed amount</td></tr>
+            <tr><td>percentage_value</td><td>decimal</td><td>For percentage</td></tr>
+            <tr><td>min_purchase_amount</td><td>decimal</td><td>Minimum spend for percentage</td></tr>
+            <tr><td>valid_from/to</td><td>date</td><td>Validity period</td></tr>
+            <tr><td>usage_limit_type</td><td>enum</td><td>single, multi, unlimited</td></tr>
+          </tbody>
+        </table>
+
+        <div class="endpoint">
+          <span class="method">GET</span> <span class="url">/voucher_templates</span>
+          <p>List all templates</p>
+        </div>
+
+        <div class="endpoint">
+          <span class="method">POST</span> <span class="url">/voucher_templates</span>
+          <p>Create new template</p>
+        </div>
+      </section>
+
+      <!-- Companies Section -->
+      <section id="companies" class="docs-section">
+        <h2>🏢 Companies (Tenants)</h2>
+
+        <h3>Company Properties</h3>
+        <table class="props-table">
+          <thead>
+            <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>tenant_name</td><td>string</td><td>Company name</td></tr>
+            <tr><td>tenant_type</td><td>enum</td><td>corporate, merchant, rfa_internal</td></tr>
+            <tr><td>email</td><td>string</td><td>Contact email</td></tr>
+            <tr><td>phone</td><td>string</td><td>Contact phone</td></tr>
+            <tr><td>wallet_balance</td><td>decimal</td><td>Pre-paid balance</td></tr>
+            <tr><td>credit_limit</td><td>decimal</td><td>Credit line</td></tr>
+          </tbody>
+        </table>
+
+        <div class="note">
+          <i class="fas fa-lightbulb"></i>
+          <strong>Quick Feature:</strong> "Use My Company" button auto-fills current user's company
+        </div>
+      </section>
+
+      <!-- Users Section -->
+      <section id="users" class="docs-section">
+        <h2>👥 Users</h2>
+
+        <h3>User Roles</h3>
+        <ul style="margin-left: 1.5rem;">
+          <li><span class="badge primary">super_admin</span> Full system access</li>
+          <li><span class="badge success">client_admin</span> Company admin</li>
+          <li><span class="badge">client_user</span> Regular company user</li>
+          <li><span class="badge warning">merchant_admin</span> Merchant admin</li>
+          <li><span class="badge">merchant_staff</span> Merchant staff</li>
+          <li><span class="badge">consumer</span> End customer</li>
+        </ul>
+
+        <h3>Recent Beneficiaries</h3>
+        <p>Last 10 beneficiaries are stored in <code>localStorage</code> for quick access:</p>
+        <div class="code-block">
+          <pre>
+let recentBeneficiaries = JSON.parse(
+  localStorage.getItem('recentBeneficiaries') || '[]'
+);</pre>
+        </div>
+      </section>
+
+      <!-- Redemptions Section -->
+      <section id="redemptions" class="docs-section">
+        <h2>✅ Redemptions</h2>
+
+        <h3>Redemption Flow</h3>
+        <ol>
+          <li>Enter voucher code (press Enter to load)</li>
+          <li>View voucher details with status badge</li>
+          <li>Search/select merchant</li>
+          <li>Enter amount (auto-filled from voucher)</li>
+          <li>Confirm redemption</li>
+        </ol>
+
+        <div class="warning-note">
+          <i class="fas fa-exclamation-triangle"></i>
+          <strong>Validation:</strong> Voucher must be 'active' to redeem. Displays error for redeemed/expired.
+        </div>
+
+        <div class="endpoint">
+          <span class="method">POST</span> <span class="url">/redemptions</span>
+          <p>Process redemption</p>
+        </div>
+      </section>
+
+      <!-- Bulk Operations -->
+      <section id="bulk-operations" class="docs-section">
+        <h2>📦 Bulk Operations</h2>
+
+        <h3>Supported Uploads</h3>
+        <ul>
+          <li><strong>Bulk Users:</strong> Create multiple users from CSV/Excel</li>
+          <li><strong>Bulk Vouchers:</strong> Create multiple vouchers from CSV/Excel</li>
+        </ul>
+
+        <h3>File Templates</h3>
+        <div class="code-block">
+          <pre>
+# users_template.csv
+email,first_name,last_name,phone,role,tenant_id
+john@example.com,John,Doe,+1234567890,client_user,uuid-here</pre>
+        </div>
+
+        <div class="code-block">
+          <pre>
+# vouchers_template.csv
+voucher_template_id,tenant_id,beneficiary_name,beneficiary_email,expires_at
+template-uuid,tenant-uuid,John Doe,john@example.com,2025-12-31</pre>
+        </div>
+
+        <h3>Progress Tracking</h3>
+        <p>Bulk operations show:</p>
+        <ul>
+          <li>Preview of first 5 rows</li>
+          <li>Progress bar during processing</li>
+          <li>Success/failure counts with error details</li>
+        </ul>
+      </section>
+
+      <!-- Analytics Section -->
+      <section id="analytics" class="docs-section">
+        <h2>📈 Analytics</h2>
+
+        <h3>Metrics Tracked</h3>
+        <table class="table">
+          <thead>
+            <tr><th>Metric</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Total Revenue</td><td>Sum of all redeemed values</td></tr>
+            <tr><td>Redemptions</td><td>Total redemptions count</td></tr>
+            <tr><td>Avg Value</td><td>Average redemption value</td></tr>
+            <tr><td>Active Users</td><td>Users active in period</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Charts</h3>
+        <ul>
+          <li><strong>Redemptions Chart:</strong> Line chart of daily redemptions</li>
+          <li><strong>Revenue Chart:</strong> Bar chart of daily revenue</li>
+          <li><strong>Top Merchants:</strong> Table of top 5 merchants by revenue</li>
+        </ul>
+
+        <div class="endpoint">
+          <span class="method">GET</span> <span class="url">/voucher-redemptions?days={days}</span>
+          <p>Get redemptions for analytics</p>
+        </div>
+      </section>
+
+      <!-- Reports Section -->
+      <section id="reports" class="docs-section">
+        <h2>📑 Reports</h2>
+
+        <h3>Report Types</h3>
+        <ul>
+          <li><span class="badge">Redemptions Report</span> - All redemptions with details</li>
+          <li><span class="badge">Vouchers Report</span> - All vouchers in system</li>
+          <li><span class="badge">Users Report</span> - System users</li>
+          <li><span class="badge">Companies Report</span> - All companies</li>
+          <li><span class="badge">Revenue Report</span> - Revenue summary</li>
+        </ul>
+
+        <h3>PDF Generation</h3>
+        <p>Reports are generated as PDFs using <code>jsPDF</code> with:</p>
+        <ul>
+          <li>Title and generation timestamp</li>
+          <li>Record count summary</li>
+          <li>First 20 records in table format</li>
+        </ul>
+      </section>
+
+      <!-- QR Generator Section -->
+      <section id="qr-generator" class="docs-section">
+        <h2>📱 QR Generator</h2>
+
+        <h3>Features</h3>
+        <ul>
+          <li><strong>Single QR:</strong> Generate QR for one voucher code</li>
+          <li><strong>Bulk QR:</strong> Generate multiple QRs from selected vouchers</li>
+          <li><strong>Print:</strong> Print all generated QR codes</li>
+        </ul>
+
+        <h3>QR URL Format</h3>
+        <div class="code-block">
+          <pre>
+${window.location.origin}/redeem?code={voucher_code}</pre>
+        </div>
+
+        <div class="note">
+          <i class="fas fa-qrcode"></i>
+          Uses <code>qrcode</code> library for generation
+        </div>
+      </section>
+
+      <!-- API Endpoints Section -->
+      <section id="api-endpoints" class="docs-section">
+        <h2>🔌 API Endpoints</h2>
+
+        <h3>Authentication</h3>
+        <div class="endpoint">
+          <span class="method">POST</span> <span class="url">/auth/login</span>
+          <p>{ email, password } → { token, user }</p>
+        </div>
+        <div class="endpoint">
+          <span class="method">POST</span> <span class="url">/auth/refresh</span>
+          <p>{ refresh_token } → { token }</p>
+        </div>
+
+        <h3>Core Resources</h3>
+        <div class="endpoint">
+          <span class="method">GET/POST</span> <span class="url">/vouchers</span>
+          <p>List/create vouchers</span>
+        </div>
+        <div class="endpoint">
+          <span class="method">GET</span> <span class="url">/vouchers/code/{code}</span>
+          <p>Get voucher by code</p>
+        </div>
+        <div class="endpoint">
+          <span class="method">GET/POST</span> <span class="url">/voucher_templates</span>
+          <p>Template management</p>
+        </div>
+        <div class="endpoint">
+          <span class="method">GET/POST</span> <span class="url">/tenants</span>
+          <p>Company management</p>
+        </div>
+        <div class="endpoint">
+          <span class="method">GET/POST</span> <span class="url">/users</span>
+          <p>User management</p>
+        </div>
+        <div class="endpoint">
+          <span class="method">GET/POST</span> <span class="url">/voucher-redemptions</span>
+          <p>Redemption tracking</p>
+        </div>
+        <div class="endpoint">
+          <span class="method">GET</span> <span class="url">/merchants</span>
+          <p>Merchant list</p>
+        </div>
+      </section>
+
+      <!-- Data Models Section -->
+      <section id="api-models" class="docs-section">
+        <h2>💾 Data Models</h2>
+
+        <h3>Voucher</h3>
+        <div class="code-block">
+          <pre>
+{
+  id: UUID,
+  code: string,
+  voucher_template_id: UUID,
+  tenant_id: UUID,
+  original_value: decimal,
+  remaining_value: decimal,
+  status: 'active'|'redeemed'|'expired',
+  beneficiary_name: string,
+  beneficiary_email: string,
+  beneficiary_phone: string,
+  expires_at: datetime,
+  created_at: datetime
+}</pre>
+        </div>
+
+        <h3>Template</h3>
+        <div class="code-block">
+          <pre>
+{
+  id: UUID,
+  tenant_id: UUID,
+  template_name: string,
+  voucher_type: 'fixed_amount'|'percentage',
+  value_amount: decimal,
+  percentage_value: decimal,
+  valid_from: date,
+  valid_to: date,
+  min_purchase_amount: decimal,
+  usage_limit_type: 'single'|'multi'|'unlimited',
+  is_active: boolean
+}</pre>
+        </div>
+
+        <h3>Tenant (Company)</h3>
+        <div class="code-block">
+          <pre>
+{
+  id: UUID,
+  tenant_name: string,
+  tenant_type: 'corporate'|'merchant'|'rfa_internal',
+  email: string,
+  phone: string,
+  wallet_balance: decimal,
+  credit_limit: decimal,
+  status: 'active'|'suspended'
+}</pre>
+        </div>
+      </section>
+
+      <!-- Authentication Section -->
+      <section id="authentication" class="docs-section">
+        <h2>🔐 Authentication</h2>
+
+        <h3>JWT Flow</h3>
+        <ol>
+          <li>Login with email/password → receive JWT token</li>
+          <li>Store token in <code>localStorage</code></li>
+          <li>Include in API calls: <code>Authorization: Bearer {token}</code></li>
+          <li>Token auto-refresh on 401 responses</li>
+        </ol>
+
+        <h3>Session Management</h3>
+        <ul>
+          <li><strong>Timeout:</strong> 30 minutes of inactivity</li>
+          <li><strong>Warning:</strong> 1 minute before expiry (popup)</li>
+          <li><strong>Extend:</strong> Click "Stay Logged In" to refresh</li>
+        </ul>
+
+        <div class="code-block">
+          <pre>
+// Session timer tracks user activity
+['click', 'mousemove', 'keypress'].forEach(event => {
+  document.addEventListener(event, resetSessionTimer);
+});</pre>
+        </div>
+      </section>
+
+      <!-- Error Handling Section -->
+      <section id="error-handling" class="docs-section">
+        <h2>⚠️ Error Handling</h2>
+
+        <h3>Error Types</h3>
+        <table class="table">
+          <thead>
+            <tr><th>Error</th><th>UI Display</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Network error</td><td>Red toast notification</td></tr>
+            <tr><td>API 401</td><td>Auto-refresh or logout</td></tr>
+            <tr><td>API 404</td><td>"Not found" message</td></tr>
+            <tr><td>Validation error</td><td>Warning box with details</td></tr>
+          </tbody>
+        </table>
+
+        <h3>User Feedback</h3>
+        <ul>
+          <li><span class="badge success">Toast</span> - Brief messages (3 seconds)</li>
+          <li><span class="badge warning">Result Box</span> - Form results (5 seconds)</li>
+          <li><span class="badge danger">Error Box</span> - Persistent errors</li>
+        </ul>
+      </section>
+
+      <!-- File Structure -->
+      <section id="file-structure" class="docs-section">
+        <h2>📁 File Structure</h2>
+        <div class="code-block">
+          <pre>
+dashboard/
+├── dashboard.html          # Main entry point
+├── style.css               # Global styles
+├── config.js               # Configuration constants
+├── api.js                  # API communication layer
+├── ui.js                   # UI utilities (toast, sidebar, session)
+├── views.js                # View loading and data management
+├── issue.js                # Issue voucher specific logic
+├── views/                  # HTML templates
+│   ├── dashboard.html
+│   ├── issue.html
+│   ├── redeem.html
+│   ├── templates.html
+│   ├── companies.html
+│   ├── users.html
+│   ├── bulk.html
+│   ├── analytics.html
+│   ├── reports.html
+│   └── qr.html
+└── docs.html               # This documentation</pre>
+        </div>
+      </section>
+
+      <!-- State Management -->
+      <section id="state-management" class="docs-section">
+        <h2>🧠 State Management</h2>
+
+        <h3>Global State (config.js)</h3>
+        <div class="code-block">
+          <pre>
+let token = localStorage.getItem('token');
+let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+let searchCache = {
+  templates: [],
+  companies: [],
+  merchants: [],
+  users: [],
+  vouchers: []
+};
+let recentBeneficiaries = [];</pre>
+        </div>
+
+        <h3>LocalStorage Keys</h3>
+        <table class="table">
+          <thead>
+            <tr><th>Key</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>token</td><td>JWT authentication token</td></tr>
+            <tr><td>refreshToken</td><td>Token refresh</td></tr>
+            <tr><td>user</td><td>Current user object</td></tr>
+            <tr><td>recentBeneficiaries</td><td>Last 10 beneficiaries</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Search System -->
+      <section id="search-system" class="docs-section">
+        <h2>🔍 Search System</h2>
+
+        <h3>Live Search Implementation</h3>
+        <div class="code-block">
+          <pre>
+function debouncedSearch(type, query, callback) {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    performSearch(type, query, callback);
+  }, 300); // Debounce delay
+}</pre>
+        </div>
+
+        <h3>Searchable Resources</h3>
+        <ul>
+          <li><strong>Templates:</strong> Search by name</li>
+          <li><strong>Companies:</strong> Search by name</li>
+          <li><strong>Merchants:</strong> Search by name</li>
+          <li><strong>Users:</strong> Search by email, first/last name</li>
+          <li><strong>Vouchers:</strong> Search by code (for QR)</li>
+        </ul>
+
+        <h3>Search Results</h3>
+        <p>Results appear in a dropdown with:</p>
+        <ul>
+          <li>Click to select → auto-fills form</li>
+          <li>Click outside to close</li>
+          <li>Keyboard navigation (coming soon)</li>
+        </ul>
+      </section>
+
+      <!-- Session Management -->
+      <section id="session" class="docs-section">
+        <h2>⏱️ Session Management</h2>
+
+        <h3>Timeline</h3>
+        <div class="code-block">
+          <pre>
+Session Start → [29 min] → Warning (60s) → [30 min] → Auto-logout
+                    ↑
+              Activity resets timer</pre>
+        </div>
+
+        <h3>Session Warning</h3>
+        <p>Popup appears at 29 minutes with:</p>
+        <ul>
+          <li>Countdown timer</li>
+          <li>"Stay Logged In" button</li>
+          <li>Auto-dismiss on activity</li>
+        </ul>
+
+        <h3>Token Refresh</h3>
+        <div class="code-block">
+          <pre>
+if (res.status === 401) {
+  const refreshed = await refreshAccessToken();
+  if (refreshed) {
+    return apiCall(endpoint, options); // Retry
+  } else {
+    logout(); // Redirect to login
+  }
+}</pre>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Mobile menu toggle (hidden on desktop) -->
+  <button class="menu-toggle" onclick="toggleMobileMenu()" style="position: fixed; bottom: 1rem; right: 1rem; background: var(--primary); color: white; border: none; border-radius: 50%; width: 48px; height: 48px; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <script>
+    // Search functionality
+    function searchDocs() {
+      const searchTerm = document.getElementById('docSearch').value.toLowerCase();
+      const sections = document.querySelectorAll('.docs-section');
+      const navItems = document.querySelectorAll('.nav-item');
+      let hasResults = false;
+
+      sections.forEach(section => {
+        const sectionId = section.id;
+        const sectionTitle = section.querySelector('h2')?.textContent.toLowerCase() || '';
+        const sectionContent = section.textContent.toLowerCase();
+        const matches = searchTerm === '' || sectionContent.includes(searchTerm) || sectionTitle.includes(searchTerm);
+        
+        section.style.display = matches ? 'block' : 'none';
+        if (matches && searchTerm !== '') hasResults = true;
+
+        // Highlight search terms in content
+        if (searchTerm !== '' && matches) {
+          highlightText(section, searchTerm);
+        } else {
+          removeHighlights(section);
+        }
+      });
+
+      // Show/hide nav items based on section visibility
+      navItems.forEach(item => {
+        const href = item.getAttribute('href').substring(1); // Remove #
+        const targetSection = document.getElementById(href);
+        if (targetSection) {
+          item.style.display = targetSection.style.display === 'none' ? 'none' : 'block';
+        }
+      });
+
+      // Show no results message
+      let noResults = document.getElementById('noResultsMessage');
+      if (!hasResults && searchTerm !== '') {
+        if (!noResults) {
+          noResults = document.createElement('div');
+          noResults.id = 'noResultsMessage';
+          noResults.className = 'no-results';
+          noResults.innerHTML = '<i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem;"></i><p>No documentation found matching "' + searchTerm + '"</p>';
+          document.querySelector('.docs-content').appendChild(noResults);
+        }
+      } else if (noResults) {
+        noResults.remove();
+      }
+    }
+
+    function highlightText(element, term) {
+      const walker = document.createTreeWalker(
+        element,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: function(node) {
+            if (node.parentElement.tagName === 'SCRIPT' || 
+                node.parentElement.tagName === 'STYLE' ||
+                node.parentElement.classList.contains('code-block')) {
+              return NodeFilter.FILTER_REJECT;
+            }
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        }
+      );
+
+      const nodesToReplace = [];
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        if (node.textContent.toLowerCase().includes(term)) {
+          nodesToReplace.push(node);
+        }
+      }
+
+      nodesToReplace.forEach(node => {
+        const span = document.createElement('span');
+        span.innerHTML = node.textContent.replace(
+          new RegExp(term, 'gi'),
+          match => `<span class="search-highlight">${match}</span>`
+        );
+        node.parentNode.replaceChild(span, node);
+      });
+    }
+
+    function removeHighlights(element) {
+      const highlights = element.querySelectorAll('.search-highlight');
+      highlights.forEach(highlight => {
+        const parent = highlight.parentNode;
+        parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+        parent.normalize();
+      });
+    }
+
+    // Set active nav item
+    function setActive(element) {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      element.classList.add('active');
+      
+      // Close mobile menu if open
+      if (window.innerWidth <= 768) {
+        document.getElementById('docsSidebar').classList.remove('open');
+      }
+    }
+
+    // Mobile menu toggle
+    function toggleMobileMenu() {
+      document.getElementById('docsSidebar').classList.toggle('open');
+    }
+
+    // Show mobile menu button on small screens
+    function checkMobile() {
+      const menuBtn = document.querySelector('.menu-toggle');
+      if (window.innerWidth <= 768) {
+        menuBtn.style.display = 'block';
+      } else {
+        menuBtn.style.display = 'none';
+        document.getElementById('docsSidebar').classList.remove('open');
+      }
+    }
+
+    window.addEventListener('resize', checkMobile);
+    checkMobile();
+
+    // Smooth scroll to sections
+    document.querySelectorAll('.nav-item').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = link.getAttribute('href').substring(1);
+        const targetSection = document.getElementById(targetId);
+        if (targetSection) {
+          targetSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    // Highlight current section in nav on scroll
+    window.addEventListener('scroll', () => {
+      const sections = document.querySelectorAll('.docs-section');
+      const navItems = document.querySelectorAll('.nav-item');
+      
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (scrollY >= sectionTop - 100) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      navItems.forEach(item => {
+        item.classList.remove('active');
+        if (item.getAttribute('href') === '#' + current) {
+          item.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
